@@ -33,6 +33,7 @@ export class ASTParser {
       const variables = new Map<string, VariableInfo>();
       const variableReferences = new Set<string>();
       const functionCalls = new Set<string>();
+      const jsxElements = new Set<string>();
       this.traverseAST(ast, {
         onImport: (importPath, specifiers, isDefault, isNamespace, loc) => {
           imports.push(importPath);
@@ -92,6 +93,9 @@ export class ASTParser {
         onFunctionCall: (name) => {
           functionCalls.add(name);
         },
+        onJSXElement: (name) => {
+          jsxElements.add(name);
+        },
         onReExport: (exportedName, sourcePath, importedName) => {
           reExports.set(exportedName, {
             sourceFile: sourcePath,
@@ -110,6 +114,7 @@ export class ASTParser {
         variables,
         variableReferences,
         functionCalls,
+        jsxElements,
         isEntryPoint: false,
       };
     } catch (error) {
@@ -174,6 +179,7 @@ export class ASTParser {
       onVariable: (name: string, loc?: any, isExported?: boolean) => void;
       onVariableReference: (name: string) => void;
       onFunctionCall: (name: string) => void;
+      onJSXElement: (name: string) => void;
       onReExport: (
         exportedName: string,
         sourcePath: string,
@@ -363,11 +369,21 @@ export class ASTParser {
     if (node.type === "TSEnumDeclaration" && node.id?.name) {
       callbacks.onExport(node.id.name, "named", node.id.loc);
     }
+    if (node.type === "JSXElement" && node.openingElement) {
+      const name = node.openingElement.name;
+      if (name.type === "JSXIdentifier" && name.name) {
+        callbacks.onJSXElement(name.name);
+      } else if (name.type === "JSXMemberExpression") {
+        if (name.property?.type === "JSXIdentifier" && name.property.name) {
+          callbacks.onJSXElement(name.property.name);
+        }
+      }
+    }
     if (node.type === "Identifier" && node.name) {
       const parent = (node as any).parent;
       const isDeclaration =
         parent &&
-        (parent.type === "VariableDeclarator" ||
+        ((parent.type === "VariableDeclarator" && parent.id === node) ||
           (parent.type === "FunctionDeclaration" && parent.id === node) ||
           (parent.type === "ClassDeclaration" && parent.id === node) ||
           parent.type === "PropertyDefinition" ||

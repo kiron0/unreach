@@ -97,6 +97,7 @@ export class ReachabilityAnalyzer {
           /\bvitest\b/g,
           /\beslint\b/g,
           /\bvitepress\b/g,
+          /\btsx\b/g,
         ];
         for (const pattern of toolPatterns) {
           if (pattern.test(command)) {
@@ -114,6 +115,7 @@ export class ReachabilityAnalyzer {
               vitest: "vitest",
               eslint: "eslint",
               vitepress: "vitepress",
+              tsx: "tsx",
             };
             const toolName = pattern.source
               .replace(/\\b/g, "")
@@ -320,6 +322,40 @@ export class ReachabilityAnalyzer {
                   }
                 }
               }
+              if (importedNode.exports.has("*")) {
+                for (const [importPath] of importedNode.importDetails ||
+                  new Map()) {
+                  if (importPath.startsWith(".")) {
+                    const sourceResolved = this.graph.resolveImport(
+                      importPath,
+                      resolved,
+                    );
+                    if (sourceResolved) {
+                      const sourceNode = this.graph.getNode(sourceResolved);
+                      if (sourceNode?.exports.has(specifier)) {
+                        const sourceReachableExports =
+                          this.reachableExports.get(sourceResolved) ||
+                          new Set();
+                        sourceReachableExports.add(specifier);
+                        this.reachableExports.set(
+                          sourceResolved,
+                          sourceReachableExports,
+                        );
+                        if (sourceNode.functions.has(specifier)) {
+                          const sourceReachableFunctions =
+                            this.reachableFunctions.get(sourceResolved) ||
+                            new Set();
+                          sourceReachableFunctions.add(specifier);
+                          this.reachableFunctions.set(
+                            sourceResolved,
+                            sourceReachableFunctions,
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
+              }
               if (importedNode.exports.has("default")) {
                 reachableExports.add("default");
               }
@@ -360,9 +396,26 @@ export class ReachabilityAnalyzer {
     }
     const functionCalls = node.functionCalls || new Set<string>();
     const variableReferences = node.variableReferences || new Set<string>();
+    const jsxElements = node.jsxElements || new Set<string>();
     for (const funcCall of functionCalls) {
       if (node.functions.has(funcCall)) {
         this.reachableFunctions.get(filePath)!.add(funcCall);
+      }
+    }
+    for (const jsxElement of jsxElements) {
+      if (node.functions.has(jsxElement)) {
+        this.reachableFunctions.get(filePath)!.add(jsxElement);
+      }
+      if (node.classes.has(jsxElement)) {
+        const reachableClasses =
+          this.reachableFunctions.get(filePath) || new Set();
+        reachableClasses.add(jsxElement);
+        this.reachableFunctions.set(filePath, reachableClasses);
+      }
+      const reachableExports = this.reachableExports.get(filePath) || new Set();
+      if (node.exports.has(jsxElement)) {
+        reachableExports.add(jsxElement);
+        this.reachableExports.set(filePath, reachableExports);
       }
     }
     for (const [importPath, importInfo] of node.importDetails || new Map()) {
@@ -371,15 +424,83 @@ export class ReachabilityAnalyzer {
         const importedNode = this.graph.getNode(resolved);
         if (importedNode && importInfo.specifiers.size > 0) {
           for (const specifier of importInfo.specifiers) {
-            if (importedNode.functions.has(specifier)) {
-              if (
-                functionCalls.has(specifier) ||
-                variableReferences.has(specifier)
-              ) {
+            if (
+              functionCalls.has(specifier) ||
+              variableReferences.has(specifier) ||
+              jsxElements.has(specifier)
+            ) {
+              if (importedNode.functions.has(specifier)) {
                 const sourceReachableFunctions =
                   this.reachableFunctions.get(resolved) || new Set();
                 sourceReachableFunctions.add(specifier);
                 this.reachableFunctions.set(resolved, sourceReachableFunctions);
+                const sourceReachableExports =
+                  this.reachableExports.get(resolved) || new Set();
+                sourceReachableExports.add(specifier);
+                this.reachableExports.set(resolved, sourceReachableExports);
+              }
+              const reExportForCall = importedNode.reExports?.get(specifier);
+              if (reExportForCall) {
+                const sourceResolved = this.graph.resolveImport(
+                  reExportForCall.sourceFile,
+                  resolved,
+                );
+                if (sourceResolved) {
+                  const sourceNode = this.graph.getNode(sourceResolved);
+                  if (sourceNode?.functions.has(reExportForCall.exportedName)) {
+                    const sourceReachableFunctions =
+                      this.reachableFunctions.get(sourceResolved) || new Set();
+                    sourceReachableFunctions.add(reExportForCall.exportedName);
+                    this.reachableFunctions.set(
+                      sourceResolved,
+                      sourceReachableFunctions,
+                    );
+                    const sourceReachableExports =
+                      this.reachableExports.get(sourceResolved) || new Set();
+                    sourceReachableExports.add(reExportForCall.exportedName);
+                    this.reachableExports.set(
+                      sourceResolved,
+                      sourceReachableExports,
+                    );
+                  }
+                }
+              } else if (importedNode.exports.has("*")) {
+                for (const [importPath] of importedNode.importDetails ||
+                  new Map()) {
+                  if (importPath.startsWith(".")) {
+                    const sourceResolved = this.graph.resolveImport(
+                      importPath,
+                      resolved,
+                    );
+                    if (sourceResolved) {
+                      const sourceNode = this.graph.getNode(sourceResolved);
+                      if (
+                        sourceNode &&
+                        (sourceNode.exports.has(specifier) ||
+                          sourceNode.functions.has(specifier))
+                      ) {
+                        const sourceReachableExports =
+                          this.reachableExports.get(sourceResolved) ||
+                          new Set();
+                        sourceReachableExports.add(specifier);
+                        this.reachableExports.set(
+                          sourceResolved,
+                          sourceReachableExports,
+                        );
+                        if (sourceNode.functions.has(specifier)) {
+                          const sourceReachableFunctions =
+                            this.reachableFunctions.get(sourceResolved) ||
+                            new Set();
+                          sourceReachableFunctions.add(specifier);
+                          this.reachableFunctions.set(
+                            sourceResolved,
+                            sourceReachableFunctions,
+                          );
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -581,18 +702,21 @@ export class ReachabilityAnalyzer {
       const reachableExports = this.reachableExports.get(file) || new Set();
       const functionCalls = node.functionCalls || new Set<string>();
       const variableReferences = node.variableReferences || new Set<string>();
+      const jsxElements = node.jsxElements || new Set<string>();
       for (const [funcName, funcInfo] of node.functions) {
         const isFunctionUsed = reachableFunctions.has(funcName);
         const isExportUsed =
           funcInfo.isExported && reachableExports.has(funcName);
         const isCalledInSameFile = functionCalls.has(funcName);
         const isReferencedAsVariable = variableReferences.has(funcName);
+        const isUsedInJSX = jsxElements.has(funcName);
         const isInEntryPoint = node.isEntryPoint;
         if (
           !isFunctionUsed &&
           !isExportUsed &&
           !isCalledInSameFile &&
           !isReferencedAsVariable &&
+          !isUsedInJSX &&
           !isInEntryPoint
         ) {
           unused.push({
@@ -614,12 +738,13 @@ export class ReachabilityAnalyzer {
         continue;
       }
       const reachableVariables = this.reachableVariables.get(file) || new Set();
+      const variableReferences = node.variableReferences || new Set<string>();
       for (const [varName, varInfo] of node.variables) {
         if (varInfo.isExported) {
           continue;
         }
         if (!reachableVariables.has(varName)) {
-          if (!node.variableReferences.has(varName)) {
+          if (!variableReferences.has(varName)) {
             unused.push({
               file,
               variableName: varName,
@@ -1035,6 +1160,11 @@ export class ReachabilityAnalyzer {
         "preshrinkwrap",
         "shrinkwrap",
         "postshrinkwrap",
+        "dev",
+        "build",
+        "format",
+        "lint",
+        "typecheck",
       ]);
       for (const [scriptName, scriptCommand] of Object.entries(scripts)) {
         const command = String(scriptCommand);
@@ -1082,11 +1212,35 @@ export class ReachabilityAnalyzer {
           /\bvitest\b/g,
           /\beslint\b/g,
           /\bvitepress\b/g,
+          /\btsx\b/g,
         ];
         let hasTool = false;
         for (const pattern of toolPatterns) {
           if (pattern.test(command)) {
             hasTool = true;
+            const toolName = pattern.source
+              .replace(/\\b/g, "")
+              .replace(/\//g, "");
+            const packageMap: Record<string, string> = {
+              tsup: "tsup",
+              prettier: "prettier",
+              typescript: "typescript",
+              tsc: "typescript",
+              terser: "terser",
+              esbuild: "esbuild",
+              webpack: "webpack",
+              vite: "vite",
+              rollup: "rollup",
+              jest: "jest",
+              vitest: "vitest",
+              eslint: "eslint",
+              vitepress: "vitepress",
+              tsx: "tsx",
+            };
+            const packageName = packageMap[toolName];
+            if (packageName) {
+              this.usedPackages.add(packageName);
+            }
             break;
           }
         }

@@ -82,6 +82,7 @@ export interface DependencyNode {
   variables: Map<string, VariableInfo>;
   variableReferences: Set<string>;
   functionCalls: Set<string>;
+  jsxElements: Set<string>;
   isEntryPoint: boolean;
 }
 export interface ExportInfo {
