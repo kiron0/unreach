@@ -219,7 +219,7 @@ export class EntryPointDetector {
       angular: ["src/main.ts", "src/app/**/*.ts"],
     };
 
-    for (const [framework, patterns] of Object.entries(frameworkPatterns)) {
+    for (const [, patterns] of Object.entries(frameworkPatterns)) {
       const frameworkFiles = await fg(patterns, {
         cwd: this.cwd,
         absolute: true,

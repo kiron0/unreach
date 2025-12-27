@@ -1,4 +1,5 @@
 import fg from "fast-glob";
+import * as fs from "fs";
 import * as path from "path";
 import type { DependencyNode } from "../types/index.js";
 import { ProgressBar } from "../utils/progress.js";
@@ -8,28 +9,84 @@ export class DependencyGraph {
   private nodes = new Map<string, DependencyNode>();
   private parser: ASTParser;
   private cwd: string;
+  private detectedBuildDirs = new Set<string>();
   constructor(cwd: string = process.cwd()) {
     this.cwd = cwd;
     this.parser = new ASTParser();
+    this.detectProjectStructure();
+  }
+
+  private detectProjectStructure(): void {
+    try {
+      const dirs = fs
+        .readdirSync(this.cwd, { withFileTypes: true })
+        .filter((dirent) => dirent.isDirectory())
+        .map((dirent) => dirent.name);
+
+      const commonBuildDirs = [
+        "dist",
+        "build",
+        "out",
+        "output",
+        ".next",
+        ".nuxt",
+        ".output",
+        "bundle",
+        "compiled",
+        "coverage",
+        "reports",
+      ];
+
+      for (const dir of dirs) {
+        if (commonBuildDirs.includes(dir)) {
+          this.detectedBuildDirs.add(dir);
+        }
+      }
+    } catch {}
+  }
+
+  private getIgnorePatterns(): string[] {
+    const patterns = [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/.svn/**",
+      "**/.hg/**",
+    ];
+
+    const buildDirs =
+      this.detectedBuildDirs.size > 0
+        ? Array.from(this.detectedBuildDirs)
+        : [
+            "dist",
+            "build",
+            "out",
+            "output",
+            ".next",
+            ".nuxt",
+            ".output",
+            "bundle",
+            "compiled",
+            "coverage",
+            "reports",
+          ];
+
+    for (const buildDir of buildDirs) {
+      patterns.push(`**/${buildDir}/**`);
+    }
+
+    return patterns;
   }
   async build(
     entryPoints: string[],
     showProgress: boolean = true,
   ): Promise<void> {
-    const sourceFiles = await fg(
-      [
-        "**/*.{ts,tsx,js,jsx}",
-        "!**/node_modules/**",
-        "!**/dist/**",
-        "!**/build/**",
-        "!**/cache/**",
-      ],
-      {
-        cwd: this.cwd,
-        absolute: true,
-        dot: true,
-      },
-    );
+    const sourceFiles = await fg(["**/*.{ts,tsx,js,jsx}"], {
+      cwd: this.cwd,
+      absolute: true,
+      dot: true,
+      ignore: this.getIgnorePatterns(),
+      followSymbolicLinks: false,
+    });
     const progressBar =
       showProgress && process.stderr.isTTY
         ? new ProgressBar(sourceFiles.length)

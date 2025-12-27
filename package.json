@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node dist/index.js",
-    "build": "rm -rf dist && tsup",
+    "build": "tsup",
     "build:watch": "tsup --watch",
     "format": "prettier --write \"**/*.{js,json,ts,md}\""
   },

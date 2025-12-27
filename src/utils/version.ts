@@ -3,7 +3,11 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+let cachedVersion: string | null = null;
+
 export function getPackageVersion(): string {
+  if (cachedVersion) return cachedVersion;
   try {
     const possiblePaths = [
       join(__dirname, "../package.json"),
@@ -14,14 +18,17 @@ export function getPackageVersion(): string {
       try {
         const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
         if (pkg.version) {
-          return pkg.version;
+          cachedVersion = String(pkg.version);
+          return cachedVersion;
         }
       } catch {
         continue;
       }
     }
-    return "0.0.0";
+    cachedVersion = "0.0.0";
+    return cachedVersion;
   } catch (error) {
-    return "0.0.0";
+    cachedVersion = "0.0.0";
+    return cachedVersion;
   }
 }

@@ -53,87 +53,106 @@ export class ReachabilityAnalyzer {
     try {
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
       const scripts = packageJson.scripts || {};
-      const toolConfigMap: Record<string, string[]> = {
-        tsup: [
-          "tsup.config.ts",
-          "tsup.config.js",
-          "tsup.config.mjs",
-          "tsup.config.cjs",
-        ],
-        vite: ["vite.config.ts", "vite.config.js", "vite.config.mjs"],
-        webpack: ["webpack.config.js", "webpack.config.ts"],
-        rollup: ["rollup.config.js", "rollup.config.ts"],
-        esbuild: ["esbuild.config.js", "esbuild.config.ts"],
-        prettier: [
-          ".prettierrc",
-          ".prettierrc.js",
-          ".prettierrc.json",
-          "prettier.config.js",
-        ],
-        eslint: [
-          ".eslintrc",
-          ".eslintrc.js",
-          ".eslintrc.json",
-          "eslint.config.js",
-        ],
-        jest: ["jest.config.js", "jest.config.ts", "jest.config.json"],
-        vitest: ["vitest.config.ts", "vitest.config.js"],
-        vitepress: [".vitepress/config.ts", ".vitepress/config.js"],
-      };
       const scriptContent = Object.values(scripts).join(" ");
-      for (const scriptCommand of Object.values(scripts)) {
-        const command = String(scriptCommand);
-        const toolPatterns = [
-          /\btsup\b/g,
-          /\bprettier\b/g,
-          /\btypescript\b/g,
-          /\btsc\b/g,
-          /\bterser\b/g,
-          /\besbuild\b/g,
-          /\bwebpack\b/g,
-          /\bvite\b/g,
-          /\brollup\b/g,
-          /\bjest\b/g,
-          /\bvitest\b/g,
-          /\beslint\b/g,
-          /\bvitepress\b/g,
-          /\btsx\b/g,
-        ];
-        for (const pattern of toolPatterns) {
-          if (pattern.test(command)) {
-            const packageMap: Record<string, string> = {
-              tsup: "tsup",
-              prettier: "prettier",
-              typescript: "typescript",
-              tsc: "typescript",
-              terser: "terser",
-              esbuild: "esbuild",
-              webpack: "webpack",
-              vite: "vite",
-              rollup: "rollup",
-              jest: "jest",
-              vitest: "vitest",
-              eslint: "eslint",
-              vitepress: "vitepress",
-              tsx: "tsx",
-            };
-            const toolName = pattern.source
-              .replace(/\\b/g, "")
-              .replace(/\//g, "");
-            const packageName = packageMap[toolName];
-            if (packageName) {
-              this.usedPackages.add(packageName);
-              const configFiles = toolConfigMap[toolName] || [];
-              for (const configFile of configFiles) {
-                const configPath = path.join(this.cwd, configFile);
-                if (fs.existsSync(configPath)) {
-                  this.reachableFiles.add(configPath);
-                }
-              }
+
+      const tools: Array<{
+        tool: string;
+        packageName: string;
+        regex: RegExp;
+        configFiles?: string[];
+      }> = [
+        {
+          tool: "tsup",
+          packageName: "tsup",
+          regex: /\btsup\b/,
+          configFiles: [
+            "tsup.config.ts",
+            "tsup.config.js",
+            "tsup.config.mjs",
+            "tsup.config.cjs",
+          ],
+        },
+        {
+          tool: "vite",
+          packageName: "vite",
+          regex: /\bvite\b/,
+          configFiles: ["vite.config.ts", "vite.config.js", "vite.config.mjs"],
+        },
+        {
+          tool: "webpack",
+          packageName: "webpack",
+          regex: /\bwebpack\b/,
+          configFiles: ["webpack.config.js", "webpack.config.ts"],
+        },
+        {
+          tool: "rollup",
+          packageName: "rollup",
+          regex: /\brollup\b/,
+          configFiles: ["rollup.config.js", "rollup.config.ts"],
+        },
+        {
+          tool: "esbuild",
+          packageName: "esbuild",
+          regex: /\besbuild\b/,
+          configFiles: ["esbuild.config.js", "esbuild.config.ts"],
+        },
+        {
+          tool: "prettier",
+          packageName: "prettier",
+          regex: /\bprettier\b/,
+          configFiles: [
+            ".prettierrc",
+            ".prettierrc.js",
+            ".prettierrc.json",
+            "prettier.config.js",
+          ],
+        },
+        {
+          tool: "eslint",
+          packageName: "eslint",
+          regex: /\beslint\b/,
+          configFiles: [
+            ".eslintrc",
+            ".eslintrc.js",
+            ".eslintrc.json",
+            "eslint.config.js",
+          ],
+        },
+        {
+          tool: "jest",
+          packageName: "jest",
+          regex: /\bjest\b/,
+          configFiles: ["jest.config.js", "jest.config.ts", "jest.config.json"],
+        },
+        {
+          tool: "vitest",
+          packageName: "vitest",
+          regex: /\bvitest\b/,
+          configFiles: ["vitest.config.ts", "vitest.config.js"],
+        },
+        {
+          tool: "vitepress",
+          packageName: "vitepress",
+          regex: /\bvitepress\b/,
+          configFiles: [".vitepress/config.ts", ".vitepress/config.js"],
+        },
+        { tool: "tsx", packageName: "tsx", regex: /\btsx\b/ },
+        { tool: "terser", packageName: "terser", regex: /\bterser\b/ },
+      ];
+
+      for (const { regex, packageName, configFiles } of tools) {
+        if (!regex.test(scriptContent)) continue;
+        this.usedPackages.add(packageName);
+        if (configFiles) {
+          for (const configFile of configFiles) {
+            const configPath = path.join(this.cwd, configFile);
+            if (fs.existsSync(configPath)) {
+              this.reachableFiles.add(configPath);
             }
           }
         }
       }
+
       if (
         scriptContent.includes("tsc") ||
         scriptContent.includes("typescript")
