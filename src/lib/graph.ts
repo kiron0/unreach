@@ -3,6 +3,7 @@ import * as path from "path";
 import type { DependencyNode } from "../types/index.js";
 import { ProgressBar } from "../utils/progress.js";
 import { ASTParser } from "./parser.js";
+
 export class DependencyGraph {
   private nodes = new Map<string, DependencyNode>();
   private parser: ASTParser;
@@ -21,10 +22,12 @@ export class DependencyGraph {
         "!**/node_modules/**",
         "!**/dist/**",
         "!**/build/**",
+        "!**/cache/**",
       ],
       {
         cwd: this.cwd,
         absolute: true,
+        dot: true,
       },
     );
     const progressBar =
@@ -53,8 +56,19 @@ export class DependencyGraph {
       progressBar.finish();
     }
     for (const entry of entryPoints) {
-      const normalizedEntry = path.normalize(entry);
-      const node = this.nodes.get(normalizedEntry);
+      let normalizedEntry = path.normalize(entry);
+      if (!path.isAbsolute(normalizedEntry)) {
+        normalizedEntry = path.resolve(this.cwd, normalizedEntry);
+      }
+      normalizedEntry = path.normalize(normalizedEntry);
+      let node = this.nodes.get(normalizedEntry);
+      if (!node) {
+        const parsedNode = this.parser.parseFile(normalizedEntry);
+        if (parsedNode) {
+          this.nodes.set(normalizedEntry, parsedNode);
+          node = parsedNode;
+        }
+      }
       if (node) {
         node.isEntryPoint = true;
       }

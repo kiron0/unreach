@@ -34,9 +34,9 @@ export function showHomePage(): void {
       chalk.gray("Scan with custom entry point"),
   );
   console.log(
-    chalk.cyan("  unreach scan --json") +
-      " ".repeat(19) +
-      chalk.gray("Output as JSON"),
+    chalk.cyan("  unreach scan --export json") +
+      " ".repeat(10) +
+      chalk.gray("Export as JSON"),
   );
   console.log(
     chalk.cyan("  unreach scan --fix") +
@@ -57,8 +57,8 @@ export function showHomePage(): void {
     chalk.cyan("unreach scan --entry src/main.ts"),
   );
   console.log(
-    chalk.gray("  # Get JSON output"),
-    chalk.cyan("unreach scan --json"),
+    chalk.gray("  # Export as JSON"),
+    chalk.cyan("unreach scan --export json"),
   );
   console.log(chalk.bold("\nOptions:"));
   console.log(
@@ -72,9 +72,14 @@ export function showHomePage(): void {
       chalk.white("Auto-remove unused code"),
   );
   console.log(
-    chalk.gray("  --json") +
-      " ".repeat(22) +
-      chalk.white("Output results as JSON"),
+    chalk.gray("  --export [format]") +
+      " ".repeat(12) +
+      chalk.white("Export report (json, csv, tsv, markdown, html)"),
+  );
+  console.log(
+    chalk.gray("  --export-path <dir>") +
+      " ".repeat(10) +
+      chalk.white("Output directory for exported reports"),
   );
   console.log(
     chalk.gray("  --cwd <cwd>") +

@@ -47,13 +47,17 @@ export interface ScanResult {
   unusedConfigs: UnusedConfig[];
   unusedScripts: UnusedScript[];
 }
+import type { OutputFormat } from "../utils/export.js";
+
 export interface ScanOptions {
   entry?: string | string[];
   fix?: boolean;
-  json?: boolean;
+  export?: OutputFormat | OutputFormat[];
+  exportPath?: string;
   cwd?: string;
   quiet?: boolean;
   noProgress?: boolean;
+  history?: boolean;
 }
 export interface ImportInfo {
   path: string;

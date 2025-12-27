@@ -78,9 +78,10 @@ export class ReachabilityAnalyzer {
         ],
         jest: ["jest.config.js", "jest.config.ts", "jest.config.json"],
         vitest: ["vitest.config.ts", "vitest.config.js"],
+        vitepress: [".vitepress/config.ts", ".vitepress/config.js"],
       };
       const scriptContent = Object.values(scripts).join(" ");
-      for (const [scriptName, scriptCommand] of Object.entries(scripts)) {
+      for (const scriptCommand of Object.values(scripts)) {
         const command = String(scriptCommand);
         const toolPatterns = [
           /\btsup\b/g,
@@ -95,6 +96,7 @@ export class ReachabilityAnalyzer {
           /\bjest\b/g,
           /\bvitest\b/g,
           /\beslint\b/g,
+          /\bvitepress\b/g,
         ];
         for (const pattern of toolPatterns) {
           if (pattern.test(command)) {
@@ -111,6 +113,7 @@ export class ReachabilityAnalyzer {
               jest: "jest",
               vitest: "vitest",
               eslint: "eslint",
+              vitepress: "vitepress",
             };
             const toolName = pattern.source
               .replace(/\\b/g, "")
@@ -196,6 +199,23 @@ export class ReachabilityAnalyzer {
           this.usedPackages.add(packageName);
         }
       }
+
+      const importExt = path.extname(importPath).toLowerCase();
+      const isAssetImport =
+        [".css", ".scss", ".sass", ".less", ".styl"].includes(importExt) ||
+        importPath.endsWith(".css") ||
+        importPath.endsWith(".scss") ||
+        importPath.endsWith(".sass") ||
+        importPath.endsWith(".less");
+
+      if (isAssetImport && importPath.startsWith(".")) {
+        const assetPath = path.resolve(path.dirname(filePath), importPath);
+        if (fs.existsSync(assetPath)) {
+          this.usedImports.get(filePath)!.add(importPath);
+          continue;
+        }
+      }
+
       const resolved = this.graph.resolveImport(importPath, filePath);
       if (resolved) {
         this.usedImports.get(filePath)!.add(importPath);
@@ -416,6 +436,23 @@ export class ReachabilityAnalyzer {
       if (node.importDetails) {
         for (const [importPath, importInfo] of node.importDetails) {
           if (importPath.startsWith(".")) {
+            const importExt = path.extname(importPath).toLowerCase();
+            const isAssetImport =
+              [".css", ".scss", ".sass", ".less", ".styl"].includes(
+                importExt,
+              ) ||
+              importPath.endsWith(".css") ||
+              importPath.endsWith(".scss") ||
+              importPath.endsWith(".sass") ||
+              importPath.endsWith(".less");
+
+            if (isAssetImport) {
+              const assetPath = path.resolve(path.dirname(file), importPath);
+              if (fs.existsSync(assetPath)) {
+                continue;
+              }
+            }
+
             const resolved = this.graph.resolveImport(importPath, file);
             if (!resolved || !this.reachableFiles.has(resolved)) {
               unused.push({
@@ -453,6 +490,21 @@ export class ReachabilityAnalyzer {
       }
       for (const importPath of node.imports) {
         if (importPath.startsWith(".")) {
+          const importExt = path.extname(importPath).toLowerCase();
+          const isAssetImport =
+            [".css", ".scss", ".sass", ".less", ".styl"].includes(importExt) ||
+            importPath.endsWith(".css") ||
+            importPath.endsWith(".scss") ||
+            importPath.endsWith(".sass") ||
+            importPath.endsWith(".less");
+
+          if (isAssetImport) {
+            const assetPath = path.resolve(path.dirname(file), importPath);
+            if (fs.existsSync(assetPath)) {
+              continue;
+            }
+          }
+
           const resolved = this.graph.resolveImport(importPath, file);
           const usedImports = this.usedImports.get(file) || new Set();
           if (
@@ -476,6 +528,15 @@ export class ReachabilityAnalyzer {
       /config\.(ts|js|mjs|cjs)$/i,
       /\.config\.(ts|js|mjs|cjs)$/i,
     ];
+
+    const isVitePressThemeFile = (filePath: string): boolean => {
+      const normalized = filePath.replace(/\\/g, "/");
+      return (
+        normalized.includes("/.vitepress/theme/") ||
+        normalized.includes("\\.vitepress\\theme\\")
+      );
+    };
+
     for (const [file, node] of nodes) {
       const isConfigFile = configFilePatterns.some((pattern) =>
         pattern.test(file),
@@ -483,6 +544,7 @@ export class ReachabilityAnalyzer {
       if (isConfigFile) {
         continue;
       }
+      const isVitePressTheme = isVitePressThemeFile(file);
       const reachableExports = this.reachableExports.get(file) || new Set();
       for (const [exportName, exportInfo] of node.exports) {
         if (exportName === "*") {
@@ -492,7 +554,13 @@ export class ReachabilityAnalyzer {
           const isTypeExport =
             exportInfo.type === "named" &&
             exportName[0] === exportName[0].toUpperCase();
-          if (!node.isEntryPoint && !isTypeExport) {
+          const isVitePressDefaultExport =
+            isVitePressTheme && exportInfo.type === "default";
+          if (
+            !node.isEntryPoint &&
+            !isTypeExport &&
+            !isVitePressDefaultExport
+          ) {
             unused.push({
               file,
               exportName,
@@ -575,12 +643,39 @@ export class ReachabilityAnalyzer {
       "README.md",
       "LICENSE",
     ];
+
+    const isConventionBasedFile = (filePath: string): boolean => {
+      const normalized = filePath.replace(/\\/g, "/");
+      if (
+        normalized.includes("/.vitepress/theme/index.") ||
+        normalized.includes("\\.vitepress\\theme\\index.")
+      ) {
+        return true;
+      }
+      if (
+        normalized.includes("/app/layout.") ||
+        normalized.includes("/app/page.") ||
+        normalized.includes("/app/loading.") ||
+        normalized.includes("/app/error.") ||
+        normalized.includes("/app/not-found.")
+      ) {
+        return true;
+      }
+      if (normalized.match(/\/routes\/.*\.(tsx?|jsx?)$/)) {
+        return true;
+      }
+      return false;
+    };
+
     for (const file of allFiles) {
       if (this.reachableFiles.has(file)) {
         continue;
       }
       const fileName = path.basename(file);
       if (commonConfigFiles.includes(fileName)) {
+        continue;
+      }
+      if (isConventionBasedFile(file)) {
         continue;
       }
       unused.push({ file });
@@ -887,7 +982,7 @@ export class ReachabilityAnalyzer {
   }
   private checkForDecorators(): boolean {
     const nodes = this.graph.getNodes();
-    for (const [file, node] of nodes) {
+    for (const [file] of nodes) {
       if (this.reachableFiles.has(file)) {
         try {
           const content = fs.readFileSync(file, "utf-8");
@@ -941,9 +1036,6 @@ export class ReachabilityAnalyzer {
         "shrinkwrap",
         "postshrinkwrap",
       ]);
-      const scriptContent = Object.entries(scripts)
-        .map(([name, cmd]) => `${name}:${cmd}`)
-        .join(" ");
       for (const [scriptName, scriptCommand] of Object.entries(scripts)) {
         const command = String(scriptCommand);
         const isReferenced = Object.entries(scripts).some(
@@ -989,6 +1081,7 @@ export class ReachabilityAnalyzer {
           /\bjest\b/g,
           /\bvitest\b/g,
           /\beslint\b/g,
+          /\bvitepress\b/g,
         ];
         let hasTool = false;
         for (const pattern of toolPatterns) {

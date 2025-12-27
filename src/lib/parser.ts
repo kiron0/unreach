@@ -355,21 +355,12 @@ export class ASTParser {
       }
     }
     if (node.type === "TSInterfaceDeclaration" && node.id?.name) {
-      const isExported =
-        node.parent?.type === "ExportNamedDeclaration" ||
-        node.parent?.type === "ExportDefaultDeclaration";
       callbacks.onExport(node.id.name, "named", node.id.loc);
     }
     if (node.type === "TSTypeAliasDeclaration" && node.id?.name) {
-      const isExported =
-        node.parent?.type === "ExportNamedDeclaration" ||
-        node.parent?.type === "ExportDefaultDeclaration";
       callbacks.onExport(node.id.name, "named", node.id.loc);
     }
     if (node.type === "TSEnumDeclaration" && node.id?.name) {
-      const isExported =
-        node.parent?.type === "ExportNamedDeclaration" ||
-        node.parent?.type === "ExportDefaultDeclaration";
       callbacks.onExport(node.id.name, "named", node.id.loc);
     }
     if (node.type === "Identifier" && node.name) {

@@ -7,6 +7,7 @@ import { EntryPointDetector } from "../lib/entry-points.js";
 import { ResultFormatter } from "../lib/formatter.js";
 import { DependencyGraph } from "../lib/graph.js";
 import type { ScanOptions } from "../types/index.js";
+import { getFormatExtension } from "../utils/export.js";
 function validateDirectory(
   dir: string,
 ): { path: string; error: null } | { path: null; error: UnreachError } {
@@ -40,9 +41,12 @@ export async function runScan(
   }
   const targetPath = validation.path;
   try {
-    if (!options.quiet && !options.json) {
-      console.log(chalk.cyan.bold("🔍 Scanning codebase...\n"));
+    const hasExport = options.export !== undefined;
+    const showProgress = !options.quiet && !hasExport && !options.noProgress;
+    if (!options.quiet && !hasExport) {
+      console.log(chalk.cyan.bold("🔍 Scanning codebase..."));
     }
+    const graph = new DependencyGraph(targetPath);
     const entryDetector = new EntryPointDetector(targetPath);
     const entryPoints = await entryDetector.detectEntryPoints(options.entry);
     if (options.entry) {
@@ -56,63 +60,91 @@ export async function runScan(
         }
       }
     }
-    if (!options.quiet && !options.json) {
+    await graph.build(entryPoints, showProgress);
+    if (!options.quiet && !hasExport) {
       if (entryPoints.length === 0) {
         console.warn(
           chalk.yellow("⚠️  Warning:") +
             chalk.yellow(" No entry points found. Using default patterns..."),
         );
       } else {
+        console.log("");
         console.log(
           chalk.green.bold(`📌 Found ${entryPoints.length} entry point(s):`),
         );
         for (const entry of entryPoints) {
           console.log(chalk.gray(`   • ${path.relative(targetPath, entry)}`));
         }
-        console.log("");
       }
     }
-    const showProgress = !options.quiet && !options.json && !options.noProgress;
-    if (!options.quiet && !options.json) {
-      console.log(chalk.blue("📊 Building dependency graph..."));
-    }
-    const graph = new DependencyGraph(targetPath);
-    await graph.build(entryPoints, showProgress);
     const nodeCount = graph.getNodes().size;
-    if (!showProgress && !options.quiet && !options.json) {
+    if (!showProgress && !options.quiet && !hasExport) {
       console.log(
         chalk.gray(`   Analyzed ${chalk.white.bold(nodeCount)} file(s)\n`),
       );
-    } else if (showProgress && !options.quiet && !options.json) {
+    } else if (showProgress && !options.quiet && !hasExport) {
       console.log("");
     }
-    if (!options.quiet && !options.json) {
+    if (!options.quiet && !hasExport) {
       console.log(chalk.blue("🔬 Analyzing reachability..."));
     }
     const analyzer = new ReachabilityAnalyzer(graph, targetPath);
     const result = analyzer.analyze();
-    if (!options.quiet && !options.json) {
+    if (!options.quiet && !hasExport) {
       console.log(chalk.gray("   Analysis complete\n"));
     }
     const formatter = new ResultFormatter();
-    const output = formatter.format(result, options.json || false);
-    console.log(output);
-    if (options.fix && !options.quiet) {
+    const formats = options.export
+      ? Array.isArray(options.export)
+        ? options.export
+        : [options.export]
+      : [];
+
+    if (formats.length > 0) {
+      const targetDir = options.exportPath
+        ? path.resolve(options.exportPath)
+        : path.resolve(targetPath, "reports");
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+
+      const timestamp = options.history
+        ? new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5)
+        : null;
+
+      for (const format of formats) {
+        const content = formatter.formatForExport(result, format);
+        const ext = getFormatExtension(format);
+        let filename = `unreach-report.${ext}`;
+        if (timestamp) {
+          filename = `unreach-report-${timestamp}.${ext}`;
+        }
+        const filePath = path.join(targetDir, filename);
+
+        try {
+          fs.writeFileSync(filePath, content, "utf-8");
+          if (!options.quiet) {
+            console.log(chalk.green(`Report written to ${filePath}`));
+          }
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          console.error(
+            chalk.red(`Failed to write report to ${filePath}: ${errorMessage}`),
+          );
+        }
+      }
+    } else {
+      const output = formatter.format(result);
+      console.log(output);
+    }
+    if (options.fix) {
       console.log(
         chalk.yellow(
           "\n⚠️  Auto-fix is not yet implemented. Please remove unused code manually.",
         ),
       );
     }
-    const totalUnused =
-      result.unusedPackages.length +
-      result.unusedImports.length +
-      result.unusedExports.length +
-      result.unusedFunctions.length +
-      result.unusedVariables.length +
-      result.unusedFiles.length +
-      result.unusedConfigs.length +
-      result.unusedScripts.length;
   } catch (error) {
     if (error instanceof UnreachError) {
       return error;

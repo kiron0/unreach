@@ -2,6 +2,7 @@ import chalk from "chalk";
 import { Command } from "commander";
 import * as path from "path";
 import type { ScanOptions } from "../types/index.js";
+import { parseOutputFormat } from "../utils/export.js";
 import { getPackageVersion } from "../utils/version.js";
 export function createCommand(): Command {
   const program = new Command();
@@ -88,10 +89,21 @@ export function createCommand(): Command {
       "Custom entry point(s) (e.g., src/index.ts)",
     )
     .option("--fix", "Automatically remove unused code (coming soon)")
-    .option("--json", "Output results as JSON format")
+    .option(
+      "--export [format]",
+      "Write report to unreach-report.{ext} in the given format (json, csv, tsv, markdown, html). Multiple formats can be specified comma-separated (e.g., json,html,markdown)",
+    )
+    .option(
+      "--export-path <dir>",
+      "Specify output directory for exported reports. Files will use default naming (unreach-report.{ext}). Directories will be created automatically if they don't exist",
+    )
     .option("--cwd <cwd>", "Working directory (overrides directory argument)")
     .option("--quiet", "Suppress all output except errors")
-    .option("--no-progress", "Disable progress indicator (enabled by default)");
+    .option("--no-progress", "Disable progress indicator (enabled by default)")
+    .option(
+      "--history",
+      "Keep previous reports by appending timestamps (e.g., unreach-report-2024-01-15T14-30-45.json). By default, reports are replaced",
+    );
   return program;
 }
 export function parseArgs(): ScanOptions & { command?: string } {
@@ -124,9 +136,11 @@ export function parseArgs(): ScanOptions & { command?: string } {
     command,
     entry: options.entry,
     fix: options.fix || false,
-    json: options.json || false,
+    export: parseOutputFormat(options.export),
+    exportPath: options.exportPath,
     cwd: options.cwd || path.resolve(directory),
     quiet: options.quiet || false,
     noProgress: options.noProgress !== undefined ? options.noProgress : false,
+    history: options.history || false,
   };
 }
