@@ -1,0 +1,49 @@
+{
+  "name": "unreach",
+  "version": "0.1.0",
+  "description": "A CLI that deeply analyzes a codebase to find what exists but is truly unused — packages, imports, exports, functions, files, and even configs — with real dependency awareness",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "unreach": "./dist/index.js"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "rm -rf dist && tsup",
+    "build:watch": "tsup --watch",
+    "format": "prettier --write \"**/*.{js,json,ts,md}\""
+  },
+  "keywords": [
+    "cli",
+    "unreach",
+    "unreachable",
+    "unused",
+    "dead",
+    "code-analysis"
+  ],
+  "author": "Toufiq Hasan Kiron <hello@kiron.dev>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kiron0/unreach.git"
+  },
+  "homepage": "https://unreach.js.org",
+  "dependencies": {
+    "commander": "^14.0.2",
+    "chalk": "^5.6.2",
+    "@typescript-eslint/typescript-estree": "^8.50.1",
+    "typescript": "^5.9.3",
+    "fast-glob": "^3.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "prettier": "^3.7.4",
+    "terser": "^5.44.1",
+    "tsup": "^8.5.1"
+  }
+}

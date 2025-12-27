@@ -1,0 +1,61 @@
+# Source files
+/src
+/tsconfig.json
+/tsup.config.ts
+
+# Dependencies
+/node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lock
+bun.lockb
+
+# Development files
+/.github
+/.vscode
+/.idea
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Tests
+/tests
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# Documentation
+/docs
+*.md
+!README.md
+
+# Examples
+/examples
+
+# Build artifacts
+*.tsbuildinfo
+*.log
+coverage/
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
