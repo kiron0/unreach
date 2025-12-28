@@ -4,6 +4,7 @@ import * as path from "path";
 import type { ScanOptions } from "../types/index.js";
 import { parseOutputFormat } from "../utils/export.js";
 import { getPackageVersion } from "../utils/version.js";
+
 export function createCommand(): Command {
   const program = new Command();
   program
@@ -103,6 +104,35 @@ export function createCommand(): Command {
     .option(
       "--history",
       "Keep previous reports by appending timestamps (e.g., unreach-report-2024-01-15T14-30-45.json). By default, reports are replaced",
+    )
+    .option(
+      "--no-incremental",
+      "Disable incremental analysis (re-analyze all files, ignoring cache)",
+    )
+    .option(
+      "--visualize",
+      "Generate an interactive dependency graph visualization (dependency-graph.html)",
+    )
+    .option(
+      "--benchmark",
+      "Track and display performance metrics (parse time, analysis time, memory usage)",
+    )
+    .option(
+      "--verbose",
+      "Show detailed output including file-by-file processing information",
+    )
+    .option(
+      "--debug",
+      "Enable debug mode with stack traces and detailed error information",
+    )
+    .option(
+      "--group-by <type>",
+      "Group output by 'type' or 'file' (default: type)",
+      "type",
+    )
+    .option(
+      "--interactive",
+      "Show interactive menu to configure scan options",
     );
   return program;
 }
@@ -132,6 +162,7 @@ export function parseArgs(): ScanOptions & { command?: string } {
   } else if (command !== "scan" && program.args.length > 1) {
     directory = program.args[1];
   }
+  const groupBy = options.groupBy === "file" ? "file" : "type";
   return {
     command,
     entry: options.entry,
@@ -142,5 +173,12 @@ export function parseArgs(): ScanOptions & { command?: string } {
     quiet: options.quiet || false,
     noProgress: options.noProgress !== undefined ? options.noProgress : false,
     history: options.history || false,
+    noIncremental: options.noIncremental || false,
+    visualize: options.visualize || false,
+    benchmark: options.benchmark || false,
+    verbose: options.verbose || false,
+    debug: options.debug || false,
+    groupBy,
+    interactive: options.interactive || false,
   };
 }

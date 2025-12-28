@@ -1,13 +1,18 @@
 import chalk from "chalk";
+
 export class ProgressBar {
   private total: number;
   private current: number = 0;
   private startTime: number;
   private width: number = 40;
   private errors: number = 0;
+  private currentFile: string | null = null;
   constructor(total: number) {
     this.total = total;
     this.startTime = Date.now();
+  }
+  setCurrentFile(file: string): void {
+    this.currentFile = file;
   }
   update(current: number, errors: number = 0): void {
     this.current = current;
@@ -54,10 +59,28 @@ export class ProgressBar {
     const elapsed = Date.now() - this.startTime;
     const elapsedStr = this.formatTime(elapsed);
     const etaStr = this.calculateETA();
+
+    let fileDisplay = "";
+    if (this.currentFile) {
+      const maxFileLen = 40;
+      const filePath =
+        this.currentFile.length > maxFileLen
+          ? "..." + this.currentFile.slice(-maxFileLen + 3)
+          : this.currentFile;
+      fileDisplay = chalk.gray(` | ${filePath}`);
+    }
+
     if (!process.stderr.isTTY) {
-      if (this.current % 100 === 0 || this.current === this.total) {
+      if (
+        this.current % 10 === 0 ||
+        this.current === this.total ||
+        this.current === 1
+      ) {
+        const fileInfo = this.currentFile
+          ? ` | Processing: ${this.currentFile}`
+          : "";
         process.stderr.write(
-          `\rProcessed: ${currentStr}/${this.total} (${percentStr}%) | ${elapsedStr} elapsed | ETA: ${etaStr}${errorsStr}`,
+          `\rProcessed: ${currentStr}/${this.total} (${percentStr}%) | ${elapsedStr} elapsed | ETA: ${etaStr}${fileInfo}${errorsStr}`,
         );
       }
       return;
@@ -65,7 +88,7 @@ export class ProgressBar {
     const filled = Math.round((percentage / 100) * this.width);
     const empty = this.width - filled;
     const bar = chalk.green("█".repeat(filled)) + chalk.gray("░".repeat(empty));
-    const line = `\r${bar} ${percentStr}% | ${currentStr}/${this.total} files | ${elapsedStr} elapsed | ETA: ${etaStr}${errorsStr}`;
+    const line = `\r${bar} ${percentStr}% | ${currentStr}/${this.total} files | ${elapsedStr} elapsed | ETA: ${etaStr}${fileDisplay}${errorsStr}`;
     process.stderr.write("\x1b[K" + line);
   }
   finish(): void {

@@ -37,6 +37,25 @@ export interface UnusedConfig {
 export interface UnusedScript {
   scriptName: string;
 }
+export interface UnusedType {
+  file: string;
+  typeName: string;
+  typeKind: "interface" | "type" | "enum";
+  line?: number;
+  column?: number;
+}
+export interface UnusedCSSClass {
+  file: string;
+  className: string;
+  line?: number;
+}
+export interface UnusedAsset {
+  file: string;
+  assetPath: string;
+  assetType: "image" | "font" | "other";
+  line?: number;
+  column?: number;
+}
 export interface ScanResult {
   unusedPackages: UnusedPackage[];
   unusedImports: UnusedImport[];
@@ -46,6 +65,9 @@ export interface ScanResult {
   unusedFiles: UnusedFile[];
   unusedConfigs: UnusedConfig[];
   unusedScripts: UnusedScript[];
+  unusedTypes: UnusedType[];
+  unusedCSSClasses: UnusedCSSClass[];
+  unusedAssets: UnusedAsset[];
 }
 import type { OutputFormat } from "../utils/export.js";
 
@@ -58,12 +80,30 @@ export interface ScanOptions {
   quiet?: boolean;
   noProgress?: boolean;
   history?: boolean;
+  noIncremental?: boolean;
+  visualize?: boolean;
+  benchmark?: boolean;
+  verbose?: boolean;
+  debug?: boolean;
+  groupBy?: "type" | "file";
+  interactive?: boolean;
 }
 export interface ImportInfo {
   path: string;
   specifiers: Set<string>;
   isDefault: boolean;
   isNamespace: boolean;
+  isTypeOnly: boolean;
+  typeSpecifiers: Set<string>;
+  line?: number;
+  column?: number;
+}
+export interface DynamicImportInfo {
+  path: string;
+  type: "import" | "require";
+  isConditional: boolean;
+  isTemplateLiteral: boolean;
+  webpackChunkName?: string;
   line?: number;
   column?: number;
 }
@@ -71,18 +111,28 @@ export interface ReExportInfo {
   sourceFile: string;
   exportedName: string;
 }
+export interface TypeInfo {
+  name: string;
+  kind: "interface" | "type" | "enum";
+  line?: number;
+  column?: number;
+  isExported: boolean;
+}
 export interface DependencyNode {
   file: string;
   imports: string[];
   importDetails: Map<string, ImportInfo>;
+  dynamicImports: DynamicImportInfo[];
   exports: Map<string, ExportInfo>;
   reExports: Map<string, ReExportInfo>;
   functions: Map<string, FunctionInfo>;
   classes: Map<string, ClassInfo>;
   variables: Map<string, VariableInfo>;
+  types: Map<string, TypeInfo>;
   variableReferences: Set<string>;
   functionCalls: Set<string>;
   jsxElements: Set<string>;
+  cssClasses: Set<string>;
   isEntryPoint: boolean;
 }
 export interface ExportInfo {

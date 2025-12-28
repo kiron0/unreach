@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { getPackageVersion } from "../utils/version.js";
+
 export function showHomePage(): void {
   const version = getPackageVersion();
   const banner = chalk.bold.cyan(`

@@ -1,4 +1,5 @@
 import * as path from "path";
+
 export class UnreachError extends Error {
   public suggestion?: string;
   constructor(
@@ -78,16 +79,34 @@ export class UnreachError extends Error {
       "  - Check if all source files are valid\n" +
       "  - Verify there are no circular dependencies causing issues\n" +
       "  - Ensure sufficient memory is available\n" +
-      "  - Try scanning a smaller subset of files first";
+      "  - Try scanning a smaller subset of files first\n" +
+      "  - Use --debug flag for detailed error information";
+    return new UnreachError(`Analysis error: ${message}`, cause, suggestion);
+  }
+
+  static parseErrorWithContext(
+    filePath: string,
+    cause?: Error,
+    context?: { line?: number; column?: number },
+  ): UnreachError {
+    let suggestion =
+      `Failed to parse "${filePath}".\n` +
+      "  - Check if the file is valid TypeScript/JavaScript\n" +
+      "  - Verify the file encoding (should be UTF-8)\n" +
+      "  - Ensure the file is not corrupted\n" +
+      "  - Check for syntax errors in the file";
+
+    if (context?.line) {
+      suggestion += `\n  - Error at line ${context.line}${context.column ? `, column ${context.column}` : ""}`;
+    }
+
     return new UnreachError(
-      `Analysis error: ${message}`,
+      `Parse error: ${filePath}${cause ? `: ${cause.message}` : ""}`,
       cause,
       suggestion,
     );
   }
 }
-export function isError<T>(
-  result: T | UnreachError,
-): result is UnreachError {
+export function isError<T>(result: T | UnreachError): result is UnreachError {
   return result instanceof UnreachError;
 }

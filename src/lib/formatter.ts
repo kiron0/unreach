@@ -1,16 +1,26 @@
 import chalk from "chalk";
 import type { ScanResult } from "../types/index.js";
 import { OutputFormat } from "../utils/export.js";
+import { createFileLink } from "../utils/file-link.js";
+
 export class ResultFormatter {
-  format(result: ScanResult, format?: OutputFormat | OutputFormat[]): string {
+  format(
+    result: ScanResult,
+    format?: OutputFormat | OutputFormat[],
+    groupBy?: "type" | "file",
+  ): string {
     if (!format) {
-      return this.formatText(result);
+      return groupBy === "file"
+        ? this.formatTextGroupedByFile(result)
+        : this.formatText(result);
     }
     const formats = Array.isArray(format) ? format : [format];
     if (formats.length === 1) {
       return this.formatForExport(result, formats[0]);
     }
-    return this.formatText(result);
+    return groupBy === "file"
+      ? this.formatTextGroupedByFile(result)
+      : this.formatText(result);
   }
 
   formatForExport(result: ScanResult, format: OutputFormat): string {
@@ -27,6 +37,61 @@ export class ResultFormatter {
         return this.formatHtml(result);
     }
   }
+  formatSummary(
+    result: ScanResult,
+    stats: {
+      totalFiles: number;
+      totalPackages: number;
+      entryPoints: number;
+    },
+  ): string {
+    const lines: string[] = [];
+    lines.push(chalk.cyan.bold("\n📊 Summary Statistics"));
+    lines.push(chalk.gray("─".repeat(50)));
+    lines.push(
+      `   ${chalk.bold("Files analyzed:")} ${chalk.white(stats.totalFiles)}`,
+    );
+    lines.push(
+      `   ${chalk.bold("Packages analyzed:")} ${chalk.white(stats.totalPackages)}`,
+    );
+    lines.push(
+      `   ${chalk.bold("Entry points:")} ${chalk.white(stats.entryPoints)}`,
+    );
+    lines.push("");
+
+    const categories = [
+      { name: "Packages", count: result.unusedPackages.length },
+      { name: "Imports", count: result.unusedImports.length },
+      { name: "Exports", count: result.unusedExports.length },
+      { name: "Functions", count: result.unusedFunctions.length },
+      { name: "Variables", count: result.unusedVariables.length },
+      { name: "Files", count: result.unusedFiles.length },
+      { name: "Configs", count: result.unusedConfigs.length },
+      { name: "Scripts", count: result.unusedScripts.length },
+      { name: "Types", count: result.unusedTypes.length },
+      { name: "CSS Classes", count: result.unusedCSSClasses.length },
+      { name: "Assets", count: result.unusedAssets.length },
+    ];
+
+    const totalUnused = categories.reduce((sum, cat) => sum + cat.count, 0);
+
+    lines.push(chalk.yellow.bold("Unused Items Breakdown:"));
+    for (const category of categories) {
+      if (category.count > 0) {
+        lines.push(
+          `   ${chalk.gray("•")} ${category.name.padEnd(15)} ${chalk.white.bold(category.count)}`,
+        );
+      }
+    }
+    lines.push("");
+    lines.push(
+      `   ${chalk.bold("Total unused items:")} ${chalk.white.bold(totalUnused)}`,
+    );
+    lines.push("");
+
+    return lines.join("\n");
+  }
+
   private formatText(result: ScanResult): string {
     const lines: string[] = [];
     if (result.unusedPackages.length > 0) {
@@ -41,7 +106,8 @@ export class ResultFormatter {
     if (result.unusedImports.length > 0) {
       lines.push(chalk.bold(`Unused imports: ${result.unusedImports.length}`));
       for (const imp of result.unusedImports.slice(0, 20)) {
-        lines.push(`  - ${imp.importPath} [${imp.file}]`);
+        const fileLink = createFileLink(imp.file, imp.line, imp.column);
+        lines.push(`  - ${imp.importPath} [${fileLink}]`);
       }
       if (result.unusedImports.length > 20) {
         lines.push(`  ... and ${result.unusedImports.length - 20} more`);
@@ -51,9 +117,8 @@ export class ResultFormatter {
     if (result.unusedExports.length > 0) {
       lines.push(chalk.bold(`Unused exports: ${result.unusedExports.length}`));
       for (const exp of result.unusedExports.slice(0, 20)) {
-        lines.push(
-          `  - ${exp.exportName} [${exp.file}]${exp.line ? `:${exp.line}` : ""}`,
-        );
+        const fileLink = createFileLink(exp.file, exp.line, exp.column);
+        lines.push(`  - ${exp.exportName} [${fileLink}]`);
       }
       if (result.unusedExports.length > 20) {
         lines.push(`  ... and ${result.unusedExports.length - 20} more`);
@@ -65,9 +130,8 @@ export class ResultFormatter {
         chalk.bold(`Unused functions: ${result.unusedFunctions.length}`),
       );
       for (const func of result.unusedFunctions.slice(0, 20)) {
-        lines.push(
-          `  - ${func.functionName} [${func.file}]${func.line ? `:${func.line}` : ""}`,
-        );
+        const fileLink = createFileLink(func.file, func.line, func.column);
+        lines.push(`  - ${func.functionName} [${fileLink}]`);
       }
       if (result.unusedFunctions.length > 20) {
         lines.push(`  ... and ${result.unusedFunctions.length - 20} more`);
@@ -79,9 +143,12 @@ export class ResultFormatter {
         chalk.bold(`Unused variables: ${result.unusedVariables.length}`),
       );
       for (const variable of result.unusedVariables.slice(0, 20)) {
-        lines.push(
-          `  - ${variable.variableName} [${variable.file}]${variable.line ? `:${variable.line}` : ""}`,
+        const fileLink = createFileLink(
+          variable.file,
+          variable.line,
+          variable.column,
         );
+        lines.push(`  - ${variable.variableName} [${fileLink}]`);
       }
       if (result.unusedVariables.length > 20) {
         lines.push(`  ... and ${result.unusedVariables.length - 20} more`);
@@ -91,7 +158,8 @@ export class ResultFormatter {
     if (result.unusedFiles.length > 0) {
       lines.push(chalk.bold(`Unused files: ${result.unusedFiles.length}`));
       for (const file of result.unusedFiles.slice(0, 20)) {
-        lines.push(`  - ${file.file}`);
+        const fileLink = createFileLink(file.file);
+        lines.push(`  - ${fileLink}`);
       }
       if (result.unusedFiles.length > 20) {
         lines.push(`  ... and ${result.unusedFiles.length - 20} more`);
@@ -112,6 +180,41 @@ export class ResultFormatter {
       }
       lines.push("");
     }
+    if (result.unusedTypes.length > 0) {
+      lines.push(chalk.bold(`Unused types: ${result.unusedTypes.length}`));
+      for (const type of result.unusedTypes.slice(0, 20)) {
+        const fileLink = createFileLink(type.file, type.line, type.column);
+        lines.push(`  - ${type.typeName} (${type.typeKind}) [${fileLink}]`);
+      }
+      if (result.unusedTypes.length > 20) {
+        lines.push(`  ... and ${result.unusedTypes.length - 20} more`);
+      }
+      lines.push("");
+    }
+    if (result.unusedCSSClasses.length > 0) {
+      lines.push(
+        chalk.bold(`Unused CSS classes: ${result.unusedCSSClasses.length}`),
+      );
+      for (const cssClass of result.unusedCSSClasses.slice(0, 20)) {
+        const fileLink = createFileLink(cssClass.file, cssClass.line);
+        lines.push(`  - .${cssClass.className} [${fileLink}]`);
+      }
+      if (result.unusedCSSClasses.length > 20) {
+        lines.push(`  ... and ${result.unusedCSSClasses.length - 20} more`);
+      }
+      lines.push("");
+    }
+    if (result.unusedAssets.length > 0) {
+      lines.push(chalk.bold(`Unused assets: ${result.unusedAssets.length}`));
+      for (const asset of result.unusedAssets.slice(0, 20)) {
+        const fileLink = createFileLink(asset.file, asset.line, asset.column);
+        lines.push(`  - ${asset.assetPath} (${asset.assetType}) [${fileLink}]`);
+      }
+      if (result.unusedAssets.length > 20) {
+        lines.push(`  ... and ${result.unusedAssets.length - 20} more`);
+      }
+      lines.push("");
+    }
     const totalUnused =
       result.unusedPackages.length +
       result.unusedImports.length +
@@ -120,7 +223,10 @@ export class ResultFormatter {
       result.unusedVariables.length +
       result.unusedFiles.length +
       result.unusedConfigs.length +
-      result.unusedScripts.length;
+      result.unusedScripts.length +
+      result.unusedTypes.length +
+      result.unusedCSSClasses.length +
+      result.unusedAssets.length;
     if (totalUnused === 0) {
       lines.push(chalk.green("✓ No unused code found!"));
     } else {
@@ -130,6 +236,201 @@ export class ResultFormatter {
         ),
       );
     }
+    return lines.join("\n");
+  }
+
+  private formatTextGroupedByFile(result: ScanResult): string {
+    const lines: string[] = [];
+    const fileMap = new Map<string, Array<{ type: string; item: any }>>();
+
+    for (const imp of result.unusedImports) {
+      if (!fileMap.has(imp.file)) {
+        fileMap.set(imp.file, []);
+      }
+      fileMap.get(imp.file)!.push({ type: "import", item: imp });
+    }
+
+    for (const exp of result.unusedExports) {
+      if (!fileMap.has(exp.file)) {
+        fileMap.set(exp.file, []);
+      }
+      fileMap.get(exp.file)!.push({ type: "export", item: exp });
+    }
+
+    for (const func of result.unusedFunctions) {
+      if (!fileMap.has(func.file)) {
+        fileMap.set(func.file, []);
+      }
+      fileMap.get(func.file)!.push({ type: "function", item: func });
+    }
+
+    for (const variable of result.unusedVariables) {
+      if (!fileMap.has(variable.file)) {
+        fileMap.set(variable.file, []);
+      }
+      fileMap.get(variable.file)!.push({ type: "variable", item: variable });
+    }
+
+    for (const file of result.unusedFiles) {
+      if (!fileMap.has(file.file)) {
+        fileMap.set(file.file, []);
+      }
+      fileMap.get(file.file)!.push({ type: "file", item: file });
+    }
+
+    for (const config of result.unusedConfigs) {
+      if (!fileMap.has(config.file)) {
+        fileMap.set(config.file, []);
+      }
+      fileMap.get(config.file)!.push({ type: "config", item: config });
+    }
+
+    for (const type of result.unusedTypes) {
+      if (!fileMap.has(type.file)) {
+        fileMap.set(type.file, []);
+      }
+      fileMap.get(type.file)!.push({ type: "type", item: type });
+    }
+
+    for (const cssClass of result.unusedCSSClasses) {
+      if (!fileMap.has(cssClass.file)) {
+        fileMap.set(cssClass.file, []);
+      }
+      fileMap.get(cssClass.file)!.push({ type: "cssClass", item: cssClass });
+    }
+
+    for (const asset of result.unusedAssets) {
+      if (!fileMap.has(asset.file)) {
+        fileMap.set(asset.file, []);
+      }
+      fileMap.get(asset.file)!.push({ type: "asset", item: asset });
+    }
+
+    if (result.unusedPackages.length > 0) {
+      lines.push(
+        chalk.bold(`\n📦 Unused packages: ${result.unusedPackages.length}`),
+      );
+      for (const pkg of result.unusedPackages) {
+        lines.push(`  - ${pkg.name}${pkg.version ? ` (${pkg.version})` : ""}`);
+      }
+      lines.push("");
+    }
+
+    if (result.unusedScripts.length > 0) {
+      lines.push(
+        chalk.bold(`📜 Unused scripts: ${result.unusedScripts.length}`),
+      );
+      for (const script of result.unusedScripts) {
+        lines.push(`  - ${script.scriptName}`);
+      }
+      lines.push("");
+    }
+
+    if (fileMap.size > 0) {
+      lines.push(chalk.bold(`\n📁 Unused items by file:\n`));
+      const sortedFiles = Array.from(fileMap.keys()).sort();
+      for (const file of sortedFiles) {
+        const items = fileMap.get(file)!;
+        const fileLink = createFileLink(file);
+        lines.push(chalk.cyan.bold(`\n  ${fileLink}`));
+        lines.push(chalk.gray(`  ${"─".repeat(60)}`));
+
+        for (const { type, item } of items) {
+          switch (type) {
+            case "import":
+              lines.push(
+                `    ${chalk.yellow("import")} ${chalk.white(item.importPath)}`,
+              );
+              break;
+            case "export":
+              const exportLink = createFileLink(
+                item.file,
+                item.line,
+                item.column,
+              );
+              lines.push(
+                `    ${chalk.yellow("export")} ${chalk.white(item.exportName)} [${exportLink}]`,
+              );
+              break;
+            case "function":
+              const funcLink = createFileLink(
+                item.file,
+                item.line,
+                item.column,
+              );
+              lines.push(
+                `    ${chalk.yellow("function")} ${chalk.white(item.functionName)} [${funcLink}]`,
+              );
+              break;
+            case "variable":
+              const varLink = createFileLink(item.file, item.line, item.column);
+              lines.push(
+                `    ${chalk.yellow("variable")} ${chalk.white(item.variableName)} [${varLink}]`,
+              );
+              break;
+            case "type":
+              const typeLink = createFileLink(
+                item.file,
+                item.line,
+                item.column,
+              );
+              lines.push(
+                `    ${chalk.yellow("type")} ${chalk.white(item.typeName)} (${item.typeKind}) [${typeLink}]`,
+              );
+              break;
+            case "cssClass":
+              const cssLink = createFileLink(item.file, item.line);
+              lines.push(
+                `    ${chalk.yellow("CSS class")} ${chalk.white(`.${item.className}`)} [${cssLink}]`,
+              );
+              break;
+            case "asset":
+              const assetLink = createFileLink(
+                item.file,
+                item.line,
+                item.column,
+              );
+              lines.push(
+                `    ${chalk.yellow("asset")} ${chalk.white(item.assetPath)} (${item.assetType}) [${assetLink}]`,
+              );
+              break;
+            case "config":
+              lines.push(
+                `    ${chalk.yellow("config")} ${chalk.white(item.configKey)}`,
+              );
+              break;
+            case "file":
+              lines.push(`    ${chalk.yellow("entire file")} (unused)`);
+              break;
+          }
+        }
+        lines.push("");
+      }
+    }
+
+    const totalUnused =
+      result.unusedPackages.length +
+      result.unusedImports.length +
+      result.unusedExports.length +
+      result.unusedFunctions.length +
+      result.unusedVariables.length +
+      result.unusedFiles.length +
+      result.unusedConfigs.length +
+      result.unusedScripts.length +
+      result.unusedTypes.length +
+      result.unusedCSSClasses.length +
+      result.unusedAssets.length;
+
+    if (totalUnused === 0) {
+      lines.push(chalk.green("\n✓ No unused code found!"));
+    } else {
+      lines.push(
+        chalk.yellow(
+          `\n📊 Total unused items: ${chalk.bold(totalUnused.toString())}`,
+        ),
+      );
+    }
+
     return lines.join("\n");
   }
 
@@ -181,6 +482,24 @@ export class ResultFormatter {
       lines.push(`Script,,"${script.scriptName}",,`);
     }
 
+    for (const type of result.unusedTypes) {
+      lines.push(
+        `Type,"${type.file}","${type.typeName} (${type.typeKind})",${type.line || ""},${type.column || ""}`,
+      );
+    }
+
+    for (const cssClass of result.unusedCSSClasses) {
+      lines.push(
+        `CSS Class,"${cssClass.file}","${cssClass.className}",${cssClass.line || ""},`,
+      );
+    }
+
+    for (const asset of result.unusedAssets) {
+      lines.push(
+        `Asset,"${asset.file}","${asset.assetPath} (${asset.assetType})",${asset.line || ""},${asset.column || ""}`,
+      );
+    }
+
     return lines.join("\n");
   }
 
@@ -228,6 +547,24 @@ export class ResultFormatter {
       lines.push(`Script\t\t${script.scriptName}\t\t`);
     }
 
+    for (const type of result.unusedTypes) {
+      lines.push(
+        `Type\t${type.file}\t${type.typeName} (${type.typeKind})\t${type.line || ""}\t${type.column || ""}`,
+      );
+    }
+
+    for (const cssClass of result.unusedCSSClasses) {
+      lines.push(
+        `CSS Class\t${cssClass.file}\t${cssClass.className}\t${cssClass.line || ""}\t`,
+      );
+    }
+
+    for (const asset of result.unusedAssets) {
+      lines.push(
+        `Asset\t${asset.file}\t${asset.assetPath} (${asset.assetType})\t${asset.line || ""}\t${asset.column || ""}`,
+      );
+    }
+
     return lines.join("\n");
   }
 
@@ -244,7 +581,10 @@ export class ResultFormatter {
     lines.push(`| Unused Variables | ${result.unusedVariables.length} |`);
     lines.push(`| Unused Files | ${result.unusedFiles.length} |`);
     lines.push(`| Unused Configs | ${result.unusedConfigs.length} |`);
-    lines.push(`| Unused Scripts | ${result.unusedScripts.length} |\n`);
+    lines.push(`| Unused Scripts | ${result.unusedScripts.length} |`);
+    lines.push(`| Unused Types | ${result.unusedTypes.length} |`);
+    lines.push(`| Unused CSS Classes | ${result.unusedCSSClasses.length} |`);
+    lines.push(`| Unused Assets | ${result.unusedAssets.length} |\n`);
 
     const total =
       result.unusedPackages.length +
@@ -254,7 +594,10 @@ export class ResultFormatter {
       result.unusedVariables.length +
       result.unusedFiles.length +
       result.unusedConfigs.length +
-      result.unusedScripts.length;
+      result.unusedScripts.length +
+      result.unusedTypes.length +
+      result.unusedCSSClasses.length +
+      result.unusedAssets.length;
     lines.push(`**Total:** ${total} items\n`);
 
     if (result.unusedPackages.length > 0) {
@@ -335,6 +678,42 @@ export class ResultFormatter {
       lines.push("");
     }
 
+    if (result.unusedTypes.length > 0) {
+      lines.push("## Unused Types\n");
+      lines.push("| File | Type Name | Kind | Line |");
+      lines.push("|------|-----------|------|------|");
+      for (const type of result.unusedTypes) {
+        lines.push(
+          `| ${type.file} | ${type.typeName} | ${type.typeKind} | ${type.line || ""} |`,
+        );
+      }
+      lines.push("");
+    }
+
+    if (result.unusedCSSClasses.length > 0) {
+      lines.push("## Unused CSS Classes\n");
+      lines.push("| File | Class Name | Line |");
+      lines.push("|------|------------|------|");
+      for (const cssClass of result.unusedCSSClasses) {
+        lines.push(
+          `| ${cssClass.file} | .${cssClass.className} | ${cssClass.line || ""} |`,
+        );
+      }
+      lines.push("");
+    }
+
+    if (result.unusedAssets.length > 0) {
+      lines.push("## Unused Assets\n");
+      lines.push("| File | Asset Path | Type | Line |");
+      lines.push("|------|------------|------|------|");
+      for (const asset of result.unusedAssets) {
+        lines.push(
+          `| ${asset.file} | ${asset.assetPath} | ${asset.assetType} | ${asset.line || ""} |`,
+        );
+      }
+      lines.push("");
+    }
+
     return lines.join("\n");
   }
 
@@ -347,7 +726,10 @@ export class ResultFormatter {
       result.unusedVariables.length +
       result.unusedFiles.length +
       result.unusedConfigs.length +
-      result.unusedScripts.length;
+      result.unusedScripts.length +
+      result.unusedTypes.length +
+      result.unusedCSSClasses.length +
+      result.unusedAssets.length;
 
     let html = `<!DOCTYPE html>
 <html lang="en">
@@ -408,6 +790,18 @@ export class ResultFormatter {
       <div class="summary-card">
         <h3>Unused Scripts</h3>
         <div class="count">${result.unusedScripts.length}</div>
+      </div>
+      <div class="summary-card">
+        <h3>Unused Types</h3>
+        <div class="count">${result.unusedTypes.length}</div>
+      </div>
+      <div class="summary-card">
+        <h3>Unused CSS Classes</h3>
+        <div class="count">${result.unusedCSSClasses.length}</div>
+      </div>
+      <div class="summary-card">
+        <h3>Unused Assets</h3>
+        <div class="count">${result.unusedAssets.length}</div>
       </div>
     </div>
     <div class="total">
@@ -476,6 +870,30 @@ export class ResultFormatter {
         html += `<li>${script.scriptName}</li>`;
       }
       html += `</ul>`;
+    }
+
+    if (result.unusedTypes.length > 0) {
+      html += `<h2>Unused Types</h2><table><thead><tr><th>File</th><th>Type Name</th><th>Kind</th><th>Line</th></tr></thead><tbody>`;
+      for (const type of result.unusedTypes) {
+        html += `<tr><td>${type.file}</td><td>${type.typeName}</td><td>${type.typeKind}</td><td>${type.line || ""}</td></tr>`;
+      }
+      html += `</tbody></table>`;
+    }
+
+    if (result.unusedCSSClasses.length > 0) {
+      html += `<h2>Unused CSS Classes</h2><table><thead><tr><th>File</th><th>Class Name</th><th>Line</th></tr></thead><tbody>`;
+      for (const cssClass of result.unusedCSSClasses) {
+        html += `<tr><td>${cssClass.file}</td><td>.${cssClass.className}</td><td>${cssClass.line || ""}</td></tr>`;
+      }
+      html += `</tbody></table>`;
+    }
+
+    if (result.unusedAssets.length > 0) {
+      html += `<h2>Unused Assets</h2><table><thead><tr><th>File</th><th>Asset Path</th><th>Type</th><th>Line</th></tr></thead><tbody>`;
+      for (const asset of result.unusedAssets) {
+        html += `<tr><td>${asset.file}</td><td>${asset.assetPath}</td><td>${asset.assetType}</td><td>${asset.line || ""}</td></tr>`;
+      }
+      html += `</tbody></table>`;
     }
 
     html += `  </div>

@@ -333,16 +333,16 @@ unreach scan --export json
 
 ## Options
 
-| Option | Description |
-|--------|-------------|
-| `--entry <entry...>` | Custom entry point(s) (e.g., `src/index.ts`) |
-| `--export [format]` | Export report in specified format(s). Multiple formats can be comma-separated (e.g., `json,html,md`). Supported formats: `json`, `csv`, `tsv`, `md`, `html`. Reports are saved to `reports/` directory by default |
-| `--export-path <dir>` | Specify output directory for exported reports. Defaults to `reports/` if not specified. Files will be named `unreach-report.{ext}`. Directories will be created automatically if they don't exist |
-| `--history` | Keep previous reports by appending timestamps (e.g., `unreach-report-2024-01-15T14-30-45.json`). By default, reports are replaced |
-| `--quiet` | Suppress all output except errors |
-| `--no-progress` | Disable progress indicator (enabled by default) |
-| `--cwd <cwd>` | Working directory (overrides directory argument) |
-| `--fix` | Automatically remove unused code (coming soon) |
+| Option                | Description                                                                                                                                                                                                       |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--entry <entry...>`  | Custom entry point(s) (e.g., `src/index.ts`)                                                                                                                                                                      |
+| `--export [format]`   | Export report in specified format(s). Multiple formats can be comma-separated (e.g., `json,html,md`). Supported formats: `json`, `csv`, `tsv`, `md`, `html`. Reports are saved to `reports/` directory by default |
+| `--export-path <dir>` | Specify output directory for exported reports. Defaults to `reports/` if not specified. Files will be named `unreach-report.{ext}`. Directories will be created automatically if they don't exist                 |
+| `--history`           | Keep previous reports by appending timestamps (e.g., `unreach-report-2024-01-15T14-30-45.json`). By default, reports are replaced                                                                                 |
+| `--quiet`             | Suppress all output except errors                                                                                                                                                                                 |
+| `--no-progress`       | Disable progress indicator (enabled by default)                                                                                                                                                                   |
+| `--cwd <cwd>`         | Working directory (overrides directory argument)                                                                                                                                                                  |
+| `--fix`               | Automatically remove unused code (coming soon)                                                                                                                                                                    |
 
 ## License
 
