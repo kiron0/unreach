@@ -87,6 +87,8 @@ export interface ScanOptions {
   debug?: boolean;
   groupBy?: "type" | "file";
   interactive?: boolean;
+  watch?: boolean;
+  noConfig?: boolean;
 }
 export interface ImportInfo {
   path: string;

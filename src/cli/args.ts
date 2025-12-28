@@ -38,15 +38,49 @@ export function createCommand(): Command {
         const match = str.match(/unknown option ['"]--?([^'"]+)['"]/);
         if (match) {
           const unknownOption = match[1];
-          process.stderr.write(
-            chalk.red.bold(
-              `\n❌ Error: Unknown option: '--${unknownOption}'\n\n`,
-            ) +
-              chalk.yellow("💡 Suggestion:\n") +
-              chalk.gray(
-                "  This option doesn't exist. Run 'unreach scan --help' to see all available options.\n\n",
-              ),
-          );
+          const scanOptions = [
+            "entry",
+            "e",
+            "fix",
+            "export",
+            "export-path",
+            "cwd",
+            "quiet",
+            "no-progress",
+            "history",
+            "no-incremental",
+            "visualize",
+            "benchmark",
+            "verbose",
+            "debug",
+            "group-by",
+            "interactive",
+            "watch",
+          ];
+
+          if (scanOptions.includes(unknownOption)) {
+            process.stderr.write(
+              chalk.red.bold(
+                `\n❌ Error: Option '--${unknownOption}' requires the 'scan' command\n\n`,
+              ) +
+                chalk.yellow("💡 Suggestion:\n") +
+                chalk.gray(
+                  `  Use 'unreach scan --${unknownOption}' instead.\n` +
+                    "  - Run 'unreach scan --help' to see all available options\n" +
+                    "  - Run 'unreach --help' to see all commands\n\n",
+                ),
+            );
+          } else {
+            process.stderr.write(
+              chalk.red.bold(
+                `\n❌ Error: Unknown option: '--${unknownOption}'\n\n`,
+              ) +
+                chalk.yellow("💡 Suggestion:\n") +
+                chalk.gray(
+                  "  This option doesn't exist. Run 'unreach scan --help' to see all available options.\n\n",
+                ),
+            );
+          }
           process.exit(1);
         }
       }
@@ -130,7 +164,15 @@ export function createCommand(): Command {
       "Group output by 'type' or 'file' (default: type)",
       "type",
     )
-    .option("--interactive", "Show interactive menu to configure scan options");
+    .option("--interactive", "Show interactive menu to configure scan options")
+    .option(
+      "--watch",
+      "Watch for file changes and automatically re-scan (continuous monitoring)",
+    )
+    .option(
+      "--no-config",
+      "Ignore configuration file and use default settings",
+    );
   return program;
 }
 export function parseArgs(): ScanOptions & { command?: string } {
@@ -160,6 +202,7 @@ export function parseArgs(): ScanOptions & { command?: string } {
     directory = program.args[1];
   }
   const groupBy = options.groupBy === "file" ? "file" : "type";
+  const noConfigPassed = process.argv.includes("--no-config");
   return {
     command,
     entry: options.entry,
@@ -177,5 +220,7 @@ export function parseArgs(): ScanOptions & { command?: string } {
     debug: options.debug || false,
     groupBy,
     interactive: options.interactive || false,
+    watch: options.watch || false,
+    noConfig: noConfigPassed || false,
   };
 }

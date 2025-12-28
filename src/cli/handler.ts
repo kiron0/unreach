@@ -3,7 +3,11 @@ import * as fs from "fs";
 import * as path from "path";
 import { isError, UnreachError } from "../core/errors.js";
 import { ReachabilityAnalyzer } from "../lib/analyzer/index.js";
-import { ConfigLoader } from "../lib/config.js";
+import {
+  ConfigLoader,
+  ConfigValidationError,
+  type UnreachConfig,
+} from "../lib/config.js";
 import { EntryPointDetector } from "../lib/entry-points.js";
 import { ResultFormatter } from "../lib/formatter.js";
 import { DependencyGraph } from "../lib/graph.js";
@@ -48,6 +52,7 @@ function formatError(error: UnreachError, debug: boolean = false): string {
 }
 export async function runScan(
   options: ScanOptions,
+  isWatchMode: boolean = false,
 ): Promise<void | UnreachError> {
   const debug = options.debug || false;
   const verbose = options.verbose || false;
@@ -59,8 +64,32 @@ export async function runScan(
   const targetPath = validation.path;
   try {
     const configLoader = new ConfigLoader(targetPath);
-    const rawConfig = configLoader.load();
+    let rawConfig: UnreachConfig | null = null;
+    try {
+      rawConfig = configLoader.load(options.noConfig || false);
+    } catch (error) {
+      if (error instanceof ConfigValidationError) {
+        console.error(chalk.red.bold("\n❌ Configuration Error:"));
+        console.error(chalk.red(error.message));
+        if (error.path) {
+          console.error(
+            chalk.gray(`   File: ${path.relative(targetPath, error.path)}`),
+          );
+        }
+        console.error(
+          chalk.yellow(
+            "\n💡 Suggestion: Fix the configuration file or use --no-config to ignore it.\n",
+          ),
+        );
+        return UnreachError.configError(error.message);
+      }
+      throw error;
+    }
     const config = configLoader.mergeWithDefaults(rawConfig);
+
+    if (options.watch) {
+      (options as any).watchRateLimit = config.watchRateLimit;
+    }
 
     const hasExport = options.export !== undefined;
     const showProgress = !options.quiet && !hasExport && !options.noProgress;
@@ -302,6 +331,21 @@ export async function runScan(
 export async function runWithExit(
   options: ScanOptions & { command?: string },
 ): Promise<void> {
+  if (options.watch) {
+    const { FileWatcher } = await import("../utils/watch.js");
+    const watcher = new FileWatcher(options.cwd || process.cwd(), options);
+
+    const shutdown = () => {
+      watcher.stop();
+      process.exit(0);
+    };
+
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
+
+    await watcher.start();
+    return;
+  }
   if (!options.quiet && !options.debug) {
     const currentVersion = getPackageVersion();
     checkForUpdates(currentVersion, "unreach")

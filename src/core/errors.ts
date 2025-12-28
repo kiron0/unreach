@@ -106,6 +106,21 @@ export class UnreachError extends Error {
       suggestion,
     );
   }
+
+  static configError(message: string, cause?: Error): UnreachError {
+    const suggestion =
+      "Configuration file error.\n" +
+      "  - Check the configuration file syntax\n" +
+      "  - Verify all required fields are present\n" +
+      "  - Ensure field types are correct (arrays, objects, booleans)\n" +
+      "  - Use --no-config to ignore the configuration file\n" +
+      "  - See documentation for configuration file format";
+    return new UnreachError(
+      `Configuration error: ${message}`,
+      cause,
+      suggestion,
+    );
+  }
 }
 export function isError<T>(result: T | UnreachError): result is UnreachError {
   return result instanceof UnreachError;

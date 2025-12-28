@@ -3,6 +3,11 @@
 /tsconfig.json
 /tsup.config.ts
 
+# Configuration files
+/unreach.config.js
+/unreach.config.ts
+/vitest.config.ts
+
 # Dependencies
 /node_modules
 package-lock.json

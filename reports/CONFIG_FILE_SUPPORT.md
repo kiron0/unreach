@@ -14,14 +14,14 @@ Unreach now supports configuration files to customize analysis behavior without 
 
 Unreach looks for configuration files in the following order (first found is used):
 
-1. `.unreachrc.json`
-2. `unreach.config.json`
-3. `.unreachrc.js` (future support)
-4. `unreach.config.js` (future support)
+1. `unreach.config.js` ✅ **IMPLEMENTED**
+2. `unreach.config.ts` ✅ **IMPLEMENTED** (requires `ts-node` to be installed)
 
 ## Configuration File Location
 
 Configuration files should be placed in the project root directory (same level as `package.json`).
+
+**Note:** Only `unreach.config.js` and `unreach.config.ts` are supported. JSON configuration files (`.unreachrc.json`, `unreach.config.json`) are no longer supported.
 
 ## Configuration Schema
 
@@ -67,12 +67,13 @@ Array of file path patterns to exclude from unused files detection.
 
 **Example:**
 
-```json
-{
-  "ignore": {
-    "files": ["**/*.test.ts", "**/fixtures/**", "**/__tests__/**"]
-  }
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  ignore: {
+    files: ["**/*.test.ts", "**/fixtures/**", "**/__tests__/**"],
+  },
+};
 ```
 
 #### `ignore.packages`
@@ -81,12 +82,13 @@ Array of package name patterns to exclude from unused packages detection.
 
 **Example:**
 
-```json
-{
-  "ignore": {
-    "packages": ["@types/*", "eslint-*"]
-  }
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  ignore: {
+    packages: ["@types/*", "eslint-*"],
+  },
+};
 ```
 
 #### `ignore.exports`
@@ -95,12 +97,13 @@ Array of export name patterns to exclude from unused exports detection.
 
 **Example:**
 
-```json
-{
-  "ignore": {
-    "exports": ["**/index.ts"]
-  }
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  ignore: {
+    exports: ["**/index.ts"],
+  },
+};
 ```
 
 #### `ignore.functions`
@@ -109,12 +112,13 @@ Array of function name patterns to exclude from unused functions detection.
 
 **Example:**
 
-```json
-{
-  "ignore": {
-    "functions": ["main", "test", "setup*"]
-  }
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  ignore: {
+    functions: ["main", "test", "setup*"],
+  },
+};
 ```
 
 #### `ignore.variables`
@@ -123,12 +127,13 @@ Array of variable name patterns to exclude from unused variables detection.
 
 **Example:**
 
-```json
-{
-  "ignore": {
-    "variables": ["_unused", "temp*"]
-  }
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  ignore: {
+    variables: ["_unused", "temp*"],
+  },
+};
 ```
 
 #### `ignore.imports`
@@ -137,12 +142,13 @@ Array of import path patterns to exclude from unused imports detection.
 
 **Example:**
 
-```json
-{
-  "ignore": {
-    "imports": ["**/*.css", "**/*.scss"]
-  }
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  ignore: {
+    imports: ["**/*.css", "**/*.scss"],
+  },
+};
 ```
 
 ### `entryPoints`
@@ -151,10 +157,11 @@ Custom entry points for analysis. If not specified, Unreach will auto-detect ent
 
 **Example:**
 
-```json
-{
-  "entryPoints": ["src/index.ts", "src/cli.ts"]
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  entryPoints: ["src/index.ts", "src/cli.ts"],
+};
 ```
 
 **Note:** CLI `--entry` option takes precedence over config entry points.
@@ -165,10 +172,11 @@ Additional file patterns to exclude from analysis (beyond the default exclusions
 
 **Example:**
 
-```json
-{
-  "excludePatterns": ["**/node_modules/**", "**/dist/**", "**/*.d.ts"]
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  excludePatterns: ["**/node_modules/**", "**/dist/**", "**/*.d.ts"],
+};
 ```
 
 ### `rules`
@@ -177,19 +185,20 @@ Enable or disable specific analysis rules. All rules are enabled by default (`tr
 
 **Example:**
 
-```json
-{
-  "rules": {
-    "unusedPackages": true,
-    "unusedImports": true,
-    "unusedExports": true,
-    "unusedFunctions": true,
-    "unusedVariables": false,
-    "unusedFiles": true,
-    "unusedConfigs": true,
-    "unusedScripts": true
-  }
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  rules: {
+    unusedPackages: true,
+    unusedImports: true,
+    unusedExports: true,
+    unusedFunctions: true,
+    unusedVariables: false,
+    unusedFiles: true,
+    unusedConfigs: true,
+    unusedScripts: true,
+  },
+};
 ```
 
 ### `fix`
@@ -198,14 +207,15 @@ Auto-fix configuration (for future implementation).
 
 **Example:**
 
-```json
-{
-  "fix": {
-    "enabled": false,
-    "backup": true,
-    "interactive": false
-  }
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  fix: {
+    enabled: false,
+    backup: true,
+    interactive: false,
+  },
+};
 ```
 
 ## Glob Pattern Matching
@@ -302,7 +312,7 @@ Configuration files use glob patterns for matching. Supported patterns:
 
 ### With Configuration File
 
-Simply create `.unreachrc.json` in your project root:
+Simply create `unreach.config.js` in your project root:
 
 ```bash
 # Configuration is automatically loaded
@@ -323,8 +333,8 @@ unreach scan --entry src/custom-entry.ts
 To ignore configuration file and use defaults:
 
 ```bash
-# Currently, config is always loaded if present
-# Future: --no-config flag may be added
+# Use --no-config flag to ignore configuration file
+unreach scan --no-config
 ```
 
 ## Migration Guide
@@ -339,10 +349,11 @@ unreach scan --entry src/index.ts --entry src/cli.ts
 
 **After (Config file):**
 
-```json
-{
-  "entryPoints": ["src/index.ts", "src/cli.ts"]
-}
+```javascript
+// unreach.config.js
+module.exports = {
+  entryPoints: ["src/index.ts", "src/cli.ts"],
+};
 ```
 
 Then simply run:
@@ -355,10 +366,12 @@ unreach scan
 
 ### Configuration Not Loading
 
-1. Check file name: Must be `.unreachrc.json` or `unreach.config.json`
+1. Check file name: Must be `unreach.config.js` or `unreach.config.ts`
 2. Check location: Must be in project root
-3. Check JSON syntax: Must be valid JSON
+3. Check JavaScript/TypeScript syntax: Must be valid JS/TS
 4. Check file permissions: Must be readable
+5. For `.ts` files: Ensure `ts-node` is installed (`npm install -D ts-node`)
+6. Check for validation errors: Invalid config structure will show clear error messages
 
 ### Patterns Not Matching
 
@@ -366,6 +379,16 @@ unreach scan
 2. Use proper glob syntax (`*`, `**`, `?`)
 3. Test patterns with simple examples first
 4. Check path separators (use `/` for cross-platform compatibility)
+
+### Configuration Validation Errors
+
+If you see validation errors:
+
+1. Check the error message for the specific field that's invalid
+2. Ensure arrays contain only strings
+3. Ensure objects are properly structured
+4. Ensure boolean values are `true` or `false` (not strings)
+5. Use `--no-config` to temporarily ignore the config file
 
 ### Entry Points Not Working
 
@@ -376,20 +399,33 @@ unreach scan
 
 ## Best Practices
 
-1. **Version Control**: Commit `.unreachrc.json` to version control
+1. **Version Control**: Commit `unreach.config.js` to version control
 2. **Team Consistency**: Share configuration across team members
 3. **Documentation**: Document why certain patterns are ignored
 4. **Regular Review**: Periodically review ignored patterns
 5. **Start Simple**: Begin with basic configuration and add patterns as needed
+6. **TypeScript Support**: Use `unreach.config.ts` for type safety (requires `ts-node`)
+7. **Validation**: The config file is automatically validated with helpful error messages
 
-## Future Enhancements
+## Implementation Status
 
-- Support for `.js` and `.ts` configuration files
-- Support for `package.json` `unreach` field
-- Support for multiple configuration files (project + user)
-- Configuration validation and error messages
-- `--no-config` flag to ignore configuration file
+✅ **JavaScript/TypeScript Config Files**: Fully implemented
+
+- Supports `unreach.config.js` (CommonJS and ES modules)
+- Supports `unreach.config.ts` (requires `ts-node`)
+
+✅ **Configuration Validation**: Fully implemented
+
+- Validates all configuration fields
+- Provides clear error messages with field paths
+- Shows suggestions for fixing errors
+
+✅ **`--no-config` Flag**: Fully implemented
+
+- Allows ignoring configuration file
+- Uses default settings when flag is set
 
 ---
 
 _Configuration file support implemented - January 2025_
+_Updated: Only JS/TS config files supported, JSON support removed_

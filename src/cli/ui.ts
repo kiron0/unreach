@@ -39,11 +39,6 @@ export function showHomePage(): void {
       " ".repeat(10) +
       chalk.gray("Export as JSON"),
   );
-  console.log(
-    chalk.cyan("  unreach scan --fix") +
-      " ".repeat(20) +
-      chalk.gray("Auto-remove unused code (coming soon)"),
-  );
   console.log(chalk.bold("\nExamples:"));
   console.log(
     chalk.gray("  # Scan current directory"),
@@ -68,11 +63,6 @@ export function showHomePage(): void {
       chalk.white("Custom entry point(s)"),
   );
   console.log(
-    chalk.gray("  --fix") +
-      " ".repeat(23) +
-      chalk.white("Auto-remove unused code"),
-  );
-  console.log(
     chalk.gray("  --export [format]") +
       " ".repeat(12) +
       chalk.white("Export report (json, csv, tsv, markdown, html)"),
@@ -86,6 +76,61 @@ export function showHomePage(): void {
     chalk.gray("  --cwd <cwd>") +
       " ".repeat(18) +
       chalk.white("Working directory"),
+  );
+  console.log(
+    chalk.gray("  --quiet") +
+      " ".repeat(21) +
+      chalk.white("Suppress all output except errors"),
+  );
+  console.log(
+    chalk.gray("  --no-progress") +
+      " ".repeat(15) +
+      chalk.white("Disable progress indicator (enabled by default)"),
+  );
+  console.log(
+    chalk.gray("  --history") +
+      " ".repeat(20) +
+      chalk.white("Keep previous reports by appending timestamps"),
+  );
+  console.log(
+    chalk.gray("  --no-incremental") +
+      " ".repeat(12) +
+      chalk.white("Disable incremental analysis (re-analyze all files)"),
+  );
+  console.log(
+    chalk.gray("  --visualize") +
+      " ".repeat(17) +
+      chalk.white("Generate an interactive dependency graph visualization"),
+  );
+  console.log(
+    chalk.gray("  --benchmark") +
+      " ".repeat(16) +
+      chalk.white("Track and display performance metrics"),
+  );
+  console.log(
+    chalk.gray("  --verbose") +
+      " ".repeat(19) +
+      chalk.white("Show detailed output including file-by-file processing"),
+  );
+  console.log(
+    chalk.gray("  --debug") +
+      " ".repeat(21) +
+      chalk.white("Enable debug mode with stack traces and detailed errors"),
+  );
+  console.log(
+    chalk.gray("  --group-by <type>") +
+      " ".repeat(10) +
+      chalk.white("Group output by 'type' or 'file' (default: type)"),
+  );
+  console.log(
+    chalk.gray("  --interactive") +
+      " ".repeat(15) +
+      chalk.white("Show interactive menu to configure scan options"),
+  );
+  console.log(
+    chalk.gray("  --watch") +
+      " ".repeat(21) +
+      chalk.white("Watch for file changes and automatically re-scan"),
   );
   console.log(chalk.bold("\nDocumentation:"));
   console.log(

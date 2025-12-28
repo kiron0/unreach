@@ -146,5 +146,34 @@ export function markBuildToolsAndConfigs(
         }
       }
     }
+
+    const allDependencies = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies,
+      ...packageJson.peerDependencies,
+    };
+    const packageNames = Object.keys(allDependencies);
+
+    for (const packageName of packageNames) {
+      const escapedName = packageName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const packageRegex = new RegExp(`\\b${escapedName}\\b`, "i");
+      if (packageRegex.test(scriptContent)) {
+        usedPackages.add(packageName);
+      }
+    }
+
+    for (const packageName of packageNames) {
+      if (packageName.startsWith("@") && packageName.includes("/")) {
+        const [scope, subPackage] = packageName.split("/");
+        const toolName = scope.replace(/^@/, "");
+        const flagPattern = new RegExp(
+          `\\b${toolName}\\b.*--${subPackage}\\b`,
+          "i",
+        );
+        if (flagPattern.test(scriptContent)) {
+          usedPackages.add(packageName);
+        }
+      }
+    }
   } catch {}
 }

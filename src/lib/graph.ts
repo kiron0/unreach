@@ -26,7 +26,8 @@ export class DependencyGraph {
   constructor(cwd: string = process.cwd(), config?: UnreachConfig) {
     this.cwd = cwd;
     this.cache = new AnalysisCache(cwd);
-    this.parser = new ASTParser(this.cache);
+    const maxFileSize = config?.maxFileSize || 10 * 1024 * 1024;
+    this.parser = new ASTParser(this.cache, maxFileSize);
     this.config = config || null;
     this.configLoader = new ConfigLoader(cwd);
     this.detectProjectStructure();
@@ -92,6 +93,17 @@ export class DependencyGraph {
 
     if (this.config?.excludePatterns) {
       patterns.push(...this.config.excludePatterns);
+    }
+
+    if (this.config?.testFileDetection?.enabled !== false) {
+      const testPatterns = this.config?.testFileDetection?.patterns ?? [
+        "**/*.test.{ts,tsx,js,jsx}",
+        "**/*.spec.{ts,tsx,js,jsx}",
+        "**/__tests__/**",
+        "**/test/**",
+        "**/tests/**",
+      ];
+      patterns.push(...testPatterns);
     }
 
     return patterns;
@@ -199,15 +211,25 @@ export class DependencyGraph {
       }
     }
 
-    if (parseErrors.length > 0 && this.verboseMode) {
+    if (parseErrors.length > 0) {
       console.warn(
         chalk.yellow(
           `\n⚠️  Warning: Failed to parse ${parseErrors.length} file(s). Continuing with remaining files...\n`,
         ),
       );
-      for (const { file, error } of parseErrors) {
+      if (this.verboseMode) {
+        for (const { file, error } of parseErrors) {
+          console.warn(
+            chalk.gray(
+              `   • ${path.relative(this.cwd, file)}: ${error.message}`,
+            ),
+          );
+        }
+      } else {
         console.warn(
-          chalk.gray(`   • ${path.relative(this.cwd, file)}: ${error.message}`),
+          chalk.gray(
+            `   Run with --verbose to see detailed error messages for each file.\n`,
+          ),
         );
       }
     }

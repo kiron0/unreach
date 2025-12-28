@@ -17,9 +17,11 @@ export class ASTParser {
   private astCache: AnalysisCache | null = null;
   private maxFileCacheSize = 50;
   private variableValues = new Map<string, string>();
+  private maxFileSize: number;
 
-  constructor(cache?: AnalysisCache) {
+  constructor(cache?: AnalysisCache, maxFileSize: number = 10 * 1024 * 1024) {
     this.astCache = cache || null;
+    this.maxFileSize = maxFileSize;
   }
 
   parseFile(
@@ -237,6 +239,14 @@ export class ASTParser {
       return this.fileCache.get(filePath)!;
     }
     try {
+      const stats = fs.statSync(filePath);
+      if (stats.size > this.maxFileSize) {
+        console.warn(
+          `⚠️  Skipping large file: ${filePath} (${(stats.size / 1024 / 1024).toFixed(2)}MB, limit: ${(this.maxFileSize / 1024 / 1024).toFixed(2)}MB)`,
+        );
+        return null;
+      }
+
       const content = fs.readFileSync(filePath, "utf-8");
 
       if (this.fileCache.size >= this.maxFileCacheSize) {

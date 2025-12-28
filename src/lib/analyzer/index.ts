@@ -68,6 +68,51 @@ export class ReachabilityAnalyzer {
       }
     }
 
+    for (const [file, node] of nodes) {
+      if (!state.reachableFiles.has(file)) {
+        const functionCalls = node.functionCalls || new Set<string>();
+        const variableReferences = node.variableReferences || new Set<string>();
+        const importDetailsMap =
+          node.importDetails instanceof Map
+            ? node.importDetails
+            : node.importDetails
+              ? new Map(Object.entries(node.importDetails))
+              : new Map();
+
+        for (const [importPath, importInfo] of importDetailsMap) {
+          const resolved = this.graph.resolveImport(importPath, file);
+          if (resolved) {
+            const importedNode = this.graph.getNode(resolved);
+            if (importedNode) {
+              const specifiersSet =
+                importInfo.specifiers instanceof Set
+                  ? importInfo.specifiers
+                  : Array.isArray(importInfo.specifiers)
+                    ? new Set(importInfo.specifiers)
+                    : new Set();
+              for (const specifier of specifiersSet) {
+                if (
+                  functionCalls.has(specifier) ||
+                  variableReferences.has(specifier)
+                ) {
+                  if (importedNode.functions.has(specifier)) {
+                    const reachableFunctions =
+                      state.reachableFunctions.get(resolved) || new Set();
+                    reachableFunctions.add(specifier);
+                    state.reachableFunctions.set(resolved, reachableFunctions);
+                    const reachableExports =
+                      state.reachableExports.get(resolved) || new Set();
+                    reachableExports.add(specifier);
+                    state.reachableExports.set(resolved, reachableExports);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     const result: ScanResult = {
       unusedPackages:
         this.config?.rules?.unusedPackages !== false
