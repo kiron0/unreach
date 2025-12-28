@@ -18,14 +18,14 @@ Tracks all `import()` calls in your codebase:
 
 ```typescript
 // Static string
-const module = await import('./utils');
+const module = await import("./utils");
 
 // Template literal
 const module = await import(`./modules/${name}`);
 
 // Conditional
 if (condition) {
-  const module = await import('./feature');
+  const module = await import("./feature");
 }
 ```
 
@@ -35,14 +35,14 @@ Tracks CommonJS `require()` calls:
 
 ```typescript
 // Static string
-const module = require('./utils');
+const module = require("./utils");
 
 // Template literal
 const module = require(`./modules/${name}`);
 
 // Conditional
 if (condition) {
-  const module = require('./feature');
+  const module = require("./feature");
 }
 ```
 
@@ -52,17 +52,17 @@ Detects imports inside conditional statements:
 
 ```typescript
 // If statement
-if (process.env.NODE_ENV === 'development') {
-  const devTools = await import('./dev-tools');
+if (process.env.NODE_ENV === "development") {
+  const devTools = await import("./dev-tools");
 }
 
 // Ternary operator
 const module = condition
-  ? await import('./module-a')
-  : await import('./module-b');
+  ? await import("./module-a")
+  : await import("./module-b");
 
 // Logical expression
-const module = condition && await import('./module');
+const module = condition && (await import("./module"));
 ```
 
 ### 4. Template Literals
@@ -83,10 +83,10 @@ Handles imports built with string concatenation:
 
 ```typescript
 // Can extract: './utils/helper'
-const module = await import('./utils/' + 'helper');
+const module = await import("./utils/" + "helper");
 
 // Can extract: './modules/'
-const module = require('./modules/' + moduleName);
+const module = require("./modules/" + moduleName);
 ```
 
 ## How It Works
@@ -135,7 +135,7 @@ const module = await import(moduleName);
 const module = await import(`./${getModuleName()}`);
 
 // ✅ Can resolve - static string
-const module = await import('./utils');
+const module = await import("./utils");
 
 // ⚠️ Partial - extracts static part, marks package as used
 const module = await import(`./modules/${moduleName}`);
@@ -144,6 +144,7 @@ const module = await import(`./modules/${moduleName}`);
 ### What Gets Tracked
 
 ✅ **Fully Tracked:**
+
 - Static string imports: `import('./utils')`
 - Static string requires: `require('./utils')`
 - Template literals with static prefixes: `import(\`./modules/\${name}\`)`
@@ -151,10 +152,12 @@ const module = await import(`./modules/${moduleName}`);
 - Conditional imports (all branches marked as reachable)
 
 ⚠️ **Partially Tracked:**
+
 - Template literals with variables (package marked as used, file may not resolve)
 - Complex expressions (package marked as used if it's a package import)
 
 ❌ **Not Tracked:**
+
 - Imports with completely dynamic paths (variable-only)
 - Imports with complex function calls in path
 
@@ -167,7 +170,7 @@ const module = await import(`./modules/${moduleName}`);
 export const helper = () => {};
 
 // src/index.ts
-const utils = await import('./utils');
+const utils = await import("./utils");
 // ✅ Detected and resolved - ./utils.ts is marked as reachable
 ```
 
@@ -182,9 +185,9 @@ export const featureB = () => {};
 
 // src/index.ts
 if (condition) {
-  const feature = await import('./feature-a');
+  const feature = await import("./feature-a");
 } else {
-  const feature = await import('./feature-b');
+  const feature = await import("./feature-b");
 }
 // ✅ Both files marked as reachable (safe approach)
 ```
@@ -196,7 +199,7 @@ if (condition) {
 export const moduleA = () => {};
 
 // src/index.ts
-const moduleName = 'module-a';
+const moduleName = "module-a";
 const module = await import(`./modules/${moduleName}`);
 // ⚠️ Partially tracked - ./modules/ extracted, package marked as used
 // File may not resolve if path is too dynamic
@@ -209,7 +212,7 @@ const module = await import(`./modules/${moduleName}`);
 module.exports = { helper: () => {} };
 
 // src/index.ts
-const utils = require('./utils');
+const utils = require("./utils");
 // ✅ Detected and resolved - ./utils.ts is marked as reachable
 ```
 
@@ -217,7 +220,7 @@ const utils = require('./utils');
 
 ```typescript
 // src/index.ts
-const lodash = await import('lodash');
+const lodash = await import("lodash");
 // ✅ Package 'lodash' marked as used
 ```
 
@@ -248,10 +251,7 @@ You can configure dynamic import handling in `.unreachrc.json`:
 ```json
 {
   "ignore": {
-    "imports": [
-      "**/*.css",
-      "**/*.scss"
-    ]
+    "imports": ["**/*.css", "**/*.scss"]
   }
 }
 ```
@@ -281,13 +281,13 @@ The parser now tracks constant variable values and uses them to resolve template
 
 ```typescript
 // Before: Could only extract static parts
-const moduleName = 'utils';
+const moduleName = "utils";
 const module = await import(`./modules/${moduleName}`);
 // ✅ Now: Resolves to './modules/utils' if moduleName is a constant
 
 // Works with nested constants
-const base = './src';
-const file = 'index';
+const base = "./src";
+const file = "index";
 const module = await import(`${base}/${file}.js`);
 // ✅ Resolves to './src/index.js'
 ```
@@ -297,12 +297,12 @@ const module = await import(`${base}/${file}.js`);
 The parser tracks variable assignments and uses them when resolving dynamic imports:
 
 ```typescript
-const MODULE_PATH = './utils';
+const MODULE_PATH = "./utils";
 const module = await import(MODULE_PATH);
 // ✅ Resolves to './utils'
 
-const BASE_DIR = './src';
-const MODULE = 'index';
+const BASE_DIR = "./src";
+const MODULE = "index";
 const module = require(`${BASE_DIR}/${MODULE}`);
 // ✅ Resolves to './src/index'
 ```
@@ -313,7 +313,7 @@ Now detects and tracks `import.meta.resolve()` calls:
 
 ```typescript
 // ES module import.meta.resolve()
-const resolvedPath = import.meta.resolve('./utils');
+const resolvedPath = import.meta.resolve("./utils");
 // ✅ Detected and tracked
 
 // Works with dynamic paths
@@ -327,16 +327,16 @@ Enhanced support for CommonJS patterns:
 
 ```typescript
 // String concatenation
-const module = require(__dirname + '/utils');
+const module = require(__dirname + "/utils");
 // ✅ Resolves relative to current file's directory
 
 // path.join() pattern
-const path = require('path');
-const module = require(path.join(__dirname, 'utils', 'helper'));
+const path = require("path");
+const module = require(path.join(__dirname, "utils", "helper"));
 // ✅ Resolves to __dirname/utils/helper
 
 // Direct concatenation
-const module = require(__dirname + '/src/index');
+const module = require(__dirname + "/src/index");
 // ✅ Resolves to file directory + '/src/index'
 ```
 
@@ -348,18 +348,18 @@ Full support for webpack's dynamic import features:
 // Webpack magic comments
 const module = import(
   /* webpackChunkName: "my-chunk" */
-  './module'
+  "./module"
 );
 // ✅ Detected and tracked
 
 // Legacy require.ensure()
-require.ensure(['./module-a', './module-b'], (require) => {
-  const a = require('./module-a');
+require.ensure(["./module-a", "./module-b"], (require) => {
+  const a = require("./module-a");
 });
 // ✅ All dependencies tracked
 
 // require.context() for directory imports
-const context = require.context('./modules', true, /\.js$/);
+const context = require.context("./modules", true, /\.js$/);
 // ✅ Base directory tracked
 ```
 
@@ -406,23 +406,23 @@ Comprehensive webpack pattern detection:
 
 ```typescript
 // src/config.ts
-export const MODULE_BASE = './modules';
+export const MODULE_BASE = "./modules";
 
 // src/index.ts
-import { MODULE_BASE } from './config';
+import { MODULE_BASE } from "./config";
 const module = await import(`${MODULE_BASE}/feature`);
 // ✅ Resolves to './modules/feature' (if MODULE_BASE is imported as constant)
 ```
 
-### Example 2: __dirname Resolution
+### Example 2: \_\_dirname Resolution
 
 ```typescript
 // src/utils/loader.ts
-const path = require('path');
-const utils = require(path.join(__dirname, 'helper'));
+const path = require("path");
+const utils = require(path.join(__dirname, "helper"));
 // ✅ Resolves to src/utils/helper.js
 
-const config = require(__dirname + '/config.json');
+const config = require(__dirname + "/config.json");
 // ✅ Resolves to src/utils/config.json
 ```
 
@@ -430,14 +430,17 @@ const config = require(__dirname + '/config.json');
 
 ```typescript
 // Webpack code splitting
-const HomePage = lazy(() => import(
-  /* webpackChunkName: "home" */
-  './pages/Home'
-));
+const HomePage = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "home" */
+      "./pages/Home"
+    ),
+);
 // ✅ Tracked with chunk name
 
 // Legacy webpack
-require.ensure(['./polyfills'], () => {
+require.ensure(["./polyfills"], () => {
   // Application code
 });
 // ✅ polyfills tracked as dependency
@@ -483,5 +486,5 @@ All dynamic import features are tested and working. The implementation handles:
 
 ---
 
-*Dynamic import support enhanced - January 2025*
-*All features fully implemented and tested*
+_Dynamic import support enhanced - January 2025_
+_All features fully implemented and tested_

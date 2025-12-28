@@ -159,11 +159,13 @@
 ## 💡 Quick Implementation Tips
 
 ### Testing Setup
+
 ```bash
 npm install -D vitest @vitest/ui
 ```
 
 Add to `package.json`:
+
 ```json
 {
   "scripts": {
@@ -174,17 +176,21 @@ Add to `package.json`:
 ```
 
 ### Parallel Processing Quick Fix
+
 In `src/lib/graph.ts`, replace sequential loop with:
+
 ```typescript
 const batchSize = 10;
 for (let i = 0; i < sourceFiles.length; i += batchSize) {
   const batch = sourceFiles.slice(i, i + batchSize);
-  await Promise.all(batch.map(file => this.parseFileAsync(file)));
+  await Promise.all(batch.map((file) => this.parseFileAsync(file)));
 }
 ```
 
 ### Configuration File Quick Start
+
 Create `.unreachrc.json`:
+
 ```json
 {
   "ignore": {

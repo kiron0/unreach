@@ -66,6 +66,7 @@ Patterns to ignore in analysis results. Uses glob pattern matching.
 Array of file path patterns to exclude from unused files detection.
 
 **Example:**
+
 ```json
 {
   "ignore": {
@@ -79,6 +80,7 @@ Array of file path patterns to exclude from unused files detection.
 Array of package name patterns to exclude from unused packages detection.
 
 **Example:**
+
 ```json
 {
   "ignore": {
@@ -92,6 +94,7 @@ Array of package name patterns to exclude from unused packages detection.
 Array of export name patterns to exclude from unused exports detection.
 
 **Example:**
+
 ```json
 {
   "ignore": {
@@ -105,6 +108,7 @@ Array of export name patterns to exclude from unused exports detection.
 Array of function name patterns to exclude from unused functions detection.
 
 **Example:**
+
 ```json
 {
   "ignore": {
@@ -118,6 +122,7 @@ Array of function name patterns to exclude from unused functions detection.
 Array of variable name patterns to exclude from unused variables detection.
 
 **Example:**
+
 ```json
 {
   "ignore": {
@@ -131,6 +136,7 @@ Array of variable name patterns to exclude from unused variables detection.
 Array of import path patterns to exclude from unused imports detection.
 
 **Example:**
+
 ```json
 {
   "ignore": {
@@ -144,6 +150,7 @@ Array of import path patterns to exclude from unused imports detection.
 Custom entry points for analysis. If not specified, Unreach will auto-detect entry points.
 
 **Example:**
+
 ```json
 {
   "entryPoints": ["src/index.ts", "src/cli.ts"]
@@ -157,6 +164,7 @@ Custom entry points for analysis. If not specified, Unreach will auto-detect ent
 Additional file patterns to exclude from analysis (beyond the default exclusions).
 
 **Example:**
+
 ```json
 {
   "excludePatterns": ["**/node_modules/**", "**/dist/**", "**/*.d.ts"]
@@ -168,6 +176,7 @@ Additional file patterns to exclude from analysis (beyond the default exclusions
 Enable or disable specific analysis rules. All rules are enabled by default (`true`).
 
 **Example:**
+
 ```json
 {
   "rules": {
@@ -188,6 +197,7 @@ Enable or disable specific analysis rules. All rules are enabled by default (`tr
 Auto-fix configuration (for future implementation).
 
 **Example:**
+
 ```json
 {
   "fix": {
@@ -207,6 +217,7 @@ Configuration files use glob patterns for matching. Supported patterns:
 - `**` - Matches any sequence of characters including path separators
 
 **Examples:**
+
 - `**/*.test.ts` - Matches all `.test.ts` files in any directory
 - `src/**` - Matches all files in `src` directory and subdirectories
 - `@types/*` - Matches all packages starting with `@types/`
@@ -321,11 +332,13 @@ To ignore configuration file and use defaults:
 ### From CLI Flags to Config File
 
 **Before (CLI flags):**
+
 ```bash
 unreach scan --entry src/index.ts --entry src/cli.ts
 ```
 
 **After (Config file):**
+
 ```json
 {
   "entryPoints": ["src/index.ts", "src/cli.ts"]
@@ -333,6 +346,7 @@ unreach scan --entry src/index.ts --entry src/cli.ts
 ```
 
 Then simply run:
+
 ```bash
 unreach scan
 ```
@@ -378,4 +392,4 @@ unreach scan
 
 ---
 
-*Configuration file support implemented - January 2025*
+_Configuration file support implemented - January 2025_

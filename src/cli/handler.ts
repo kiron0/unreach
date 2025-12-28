@@ -2,7 +2,7 @@ import chalk from "chalk";
 import * as fs from "fs";
 import * as path from "path";
 import { isError, UnreachError } from "../core/errors.js";
-import { ReachabilityAnalyzer } from "../lib/analyzer.js";
+import { ReachabilityAnalyzer } from "../lib/analyzer/index.js";
 import { ConfigLoader } from "../lib/config.js";
 import { EntryPointDetector } from "../lib/entry-points.js";
 import { ResultFormatter } from "../lib/formatter.js";

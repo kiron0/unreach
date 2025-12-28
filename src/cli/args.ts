@@ -130,10 +130,7 @@ export function createCommand(): Command {
       "Group output by 'type' or 'file' (default: type)",
       "type",
     )
-    .option(
-      "--interactive",
-      "Show interactive menu to configure scan options",
-    );
+    .option("--interactive", "Show interactive menu to configure scan options");
   return program;
 }
 export function parseArgs(): ScanOptions & { command?: string } {

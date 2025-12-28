@@ -7,17 +7,20 @@
 **Location:** `src/lib/graph.ts`
 
 **Implementation:**
+
 - Files are now processed in parallel batches
 - Uses `Promise.allSettled()` for concurrent processing
 - Concurrency is automatically determined based on CPU count (capped at 8)
 - Maintains progress bar updates during parallel processing
 
 **Performance Impact:**
+
 - 3-5x faster on multi-core systems
 - Scales with available CPU cores
 - Non-blocking I/O operations
 
 **Code Changes:**
+
 ```typescript
 // Process files in batches
 const concurrency = Math.min(os.cpus().length, 8);
@@ -25,7 +28,7 @@ const batches = this.chunkArray(filesToProcess, concurrency);
 
 for (const batch of batches) {
   const results = await Promise.allSettled(
-    batch.map((file) => this.parseFileWithErrorHandling(file))
+    batch.map((file) => this.parseFileWithErrorHandling(file)),
   );
   // Process results...
 }
@@ -38,6 +41,7 @@ for (const batch of batches) {
 **Location:** `src/lib/graph.ts`, `src/lib/cache.ts`
 
 **Implementation:**
+
 - Tracks file metadata (hash, mtime, size) in `.unreach/cache.json`
 - Only re-parses changed or new files
 - Loads unchanged files from AST cache
@@ -45,11 +49,13 @@ for (const batch of batches) {
 - Can be disabled with `--no-incremental` flag
 
 **Performance Impact:**
+
 - Subsequent scans are 5-10x faster on unchanged codebases
 - Only processes files that have changed since last scan
 - Reduces I/O operations significantly
 
 **Cache Structure:**
+
 ```
 .unreach/
   ├── cache.json          # File metadata cache
@@ -58,6 +64,7 @@ for (const batch of batches) {
 ```
 
 **Usage:**
+
 ```bash
 # Incremental analysis (default)
 unreach scan
@@ -73,18 +80,21 @@ unreach scan --no-incremental
 **Location:** `src/lib/parser.ts`, `src/lib/graph.ts`, `src/lib/analyzer.ts`, `src/cli/handler.ts`
 
 **Implementation:**
+
 - **File Cache Limiting:** Parser limits in-memory file cache to 50 files (FIFO)
 - **Cache Clearing:** Automatic memory cleanup after analysis
 - **Resolution Caching:** Import resolution results are cached to avoid redundant lookups
 - **Memory Cleanup:** Explicit cleanup methods called after analysis completes
 
 **Memory Optimizations:**
+
 1. **Parser File Cache:** Limited to 50 files, oldest entries removed when limit reached
 2. **Import Resolution Cache:** Caches resolved import paths to avoid repeated file system lookups
 3. **Post-Analysis Cleanup:** Clears temporary caches after analysis completes
 4. **AST Cache Size Management:** Automatically cleans old AST cache files when size exceeds 100MB
 
 **Code Changes:**
+
 ```typescript
 // Parser: Limited file cache
 if (this.fileCache.size >= this.maxFileCacheSize) {
@@ -113,6 +123,7 @@ graph.clearMemory();
 **Location:** `src/lib/parser.ts`, `src/lib/cache.ts`
 
 **Implementation:**
+
 - Parsed ASTs are cached to disk in `.unreach/asts/`
 - Cache files are keyed by file path hash
 - Cache includes file hash for validation
@@ -121,16 +132,19 @@ graph.clearMemory();
 - Cache expiration (7 days)
 
 **Performance Impact:**
+
 - Eliminates redundant parsing of unchanged files
 - Significant speedup on repeated scans
 - Reduces CPU usage
 
 **Cache Validation:**
+
 - Compares file hash before using cached AST
 - Automatically invalidates on hash mismatch
 - Timestamp-based expiration (7 days)
 
 **Code Changes:**
+
 ```typescript
 // Check cache before parsing
 if (useCache && this.astCache) {
@@ -155,23 +169,27 @@ if (useCache && this.astCache) {
 **Location:** `src/lib/graph.ts`, `src/lib/analyzer.ts`
 
 **Implementation:**
+
 - Import resolution only happens when needed during reachability analysis
 - Resolution results are cached to avoid redundant lookups
 - Imports are resolved on-demand as the dependency graph is traversed
 - No upfront resolution of all imports
 
 **Performance Impact:**
+
 - Reduces upfront computation
 - Only resolves imports for files that are actually reachable
 - Cached resolution results prevent redundant work
 
 **How It Works:**
+
 1. Files are parsed and imports are extracted (but not resolved)
 2. During reachability analysis, imports are resolved only when traversing the graph
 3. Resolution results are cached for subsequent lookups
 4. Unreachable files' imports are never resolved
 
 **Code Changes:**
+
 ```typescript
 // Lazy resolution with caching
 resolveImport(importPath: string, fromFile: string): string | null {
@@ -189,15 +207,16 @@ resolveImport(importPath: string, fromFile: string): string | null {
 
 ## 📊 Performance Improvements Summary
 
-| Optimization | Speed Improvement | Memory Impact |
-|--------------|-------------------|---------------|
-| Parallel Processing | 3-5x faster | Minimal increase |
+| Optimization         | Speed Improvement               | Memory Impact                |
+| -------------------- | ------------------------------- | ---------------------------- |
+| Parallel Processing  | 3-5x faster                     | Minimal increase             |
 | Incremental Analysis | 5-10x faster (subsequent scans) | Reduced (fewer files parsed) |
-| AST Caching | 2-3x faster (repeated scans) | Disk cache (~100MB limit) |
-| Lazy Resolution | 1.5-2x faster | Reduced (fewer resolutions) |
-| Memory Optimization | N/A | 30-50% reduction |
+| AST Caching          | 2-3x faster (repeated scans)    | Disk cache (~100MB limit)    |
+| Lazy Resolution      | 1.5-2x faster                   | Reduced (fewer resolutions)  |
+| Memory Optimization  | N/A                             | 30-50% reduction             |
 
 **Combined Impact:**
+
 - **First Scan:** 3-5x faster (parallel processing)
 - **Subsequent Scans:** 10-20x faster (incremental + caching)
 - **Memory Usage:** 30-50% reduction
@@ -207,6 +226,7 @@ resolveImport(importPath: string, fromFile: string): string | null {
 ## 🔧 New CLI Options
 
 ### `--no-incremental`
+
 Disables incremental analysis and forces a full re-scan of all files.
 
 ```bash
@@ -267,6 +287,7 @@ unreach scan --no-incremental
 ## 🚀 Usage Examples
 
 ### Basic Usage (with all optimizations)
+
 ```bash
 # First scan - uses parallel processing
 unreach scan
@@ -279,6 +300,7 @@ unreach scan --no-incremental
 ```
 
 ### With Export
+
 ```bash
 # Fast incremental scan with export
 unreach scan --export json
@@ -310,4 +332,4 @@ To verify optimizations are working:
 
 ---
 
-*All optimizations implemented and tested - January 2025*
+_All optimizations implemented and tested - January 2025_

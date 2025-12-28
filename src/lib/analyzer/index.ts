@@ -1,5 +1,8 @@
-import type { ScanResult } from "../types/index.js";
-import { markBuildToolsAndConfigs } from "./analyzer/build-tools.js";
+import type { ScanResult } from "../../types/index.js";
+import type { UnreachConfig } from "../config.js";
+import { ConfigLoader } from "../config.js";
+import { DependencyGraph } from "../graph.js";
+import { markBuildToolsAndConfigs } from "./build-tools.js";
 import {
   findUnusedAssets,
   findUnusedCSSClasses,
@@ -12,13 +15,10 @@ import {
   findUnusedScripts,
   findUnusedTypes,
   findUnusedVariables,
-} from "./analyzer/finders/index.js";
-import { applyIgnores } from "./analyzer/ignore-filter.js";
-import type { ReachabilityState } from "./analyzer/reachability-state.js";
-import { markReachable } from "./analyzer/reachability.js";
-import type { UnreachConfig } from "./config.js";
-import { ConfigLoader } from "./config.js";
-import { DependencyGraph } from "./graph.js";
+} from "./finders/index.js";
+import { applyIgnores } from "./ignore-filter.js";
+import type { ReachabilityState } from "./reachability-state.js";
+import { markReachable } from "./reachability.js";
 
 export class ReachabilityAnalyzer {
   private graph: DependencyGraph;
