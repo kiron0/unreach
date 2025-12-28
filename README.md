@@ -79,9 +79,7 @@ pnpm add -g unreach
 #### Check for updates
 
 ```bash
-unreach check-updates
-# or
-unreach update
+unreach check-update
 ```
 
 #### Check version
@@ -262,7 +260,7 @@ unreach scan /path/to/typescript-project
 unreach scan --entry src/main.ts
 
 # Scan with multiple entry points
-unreach scan --entry src/index.ts --entry src/cli.ts
+unreach scan --entry src/index.ts,src/cli.ts
 
 # Export as JSON for automation (saved to reports/ by default)
 unreach scan --export json
@@ -310,7 +308,7 @@ unreach scan --no-incremental
 unreach scan --no-config
 
 # Check for updates
-unreach check-updates
+unreach check-update
 ```
 
 ## How It Works
@@ -424,12 +422,10 @@ unreach scan --export json
 unreach scan [directory] [options]
 ```
 
-### `check-updates` / `update` - Check for available updates
+### `check-update` - Check for available updates
 
 ```bash
-unreach check-updates
-# or
-unreach update
+unreach check-update
 ```
 
 Automatically detects your package manager and shows the correct install command.
@@ -448,7 +444,7 @@ unreach -v
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--entry <entry...>` | `-e` | Custom entry point(s) (e.g., `src/index.ts`). Can be specified multiple times. |
+| `--entry <entry>` | `-e` | Custom entry point(s). Multiple entry points can be specified comma-separated (e.g., `src/index.ts,src/cli.ts`). |
 | `--export [format]` | | Export report in specified format(s). Multiple formats can be comma-separated (e.g., `json,html,md`). Supported formats: `json`, `csv`, `tsv`, `md`, `html`. Reports are saved to `reports/` directory by default |
 | `--export-path <dir>` | | Specify output directory for exported reports. Defaults to `reports/` if not specified. Files will be named `unreach-report.{ext}`. Directories will be created automatically if they don't exist |
 | `--history` | | Keep previous reports by appending timestamps (e.g., `unreach-report-2024-01-15T14-30-45.json`). By default, reports are replaced |

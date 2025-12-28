@@ -21,6 +21,7 @@ export function findUnusedConfigs(
         "version",
         "type",
         "main",
+        "types",
         "bin",
         "scripts",
         "dependencies",

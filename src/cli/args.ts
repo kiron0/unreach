@@ -27,7 +27,7 @@ export function createCommand(): Command {
                 `  The 'scan' command expects ${expected} argument (directory path), but ${got} were provided.\n` +
                   "  - Use quotes for paths with spaces: unreach scan '/path/with spaces'\n" +
                   "  - Only provide one directory path as an argument\n" +
-                  "  - Use '--entry' for multiple entry points: unreach scan --entry src/index.ts src/main.ts\n" +
+                  "  - Use '--entry' for multiple entry points: unreach scan --entry src/index.ts,src/main.ts\n" +
                   "  - Run 'unreach scan --help' to see usage examples\n\n",
               ),
           );
@@ -94,9 +94,9 @@ export function createCommand(): Command {
             ) +
               chalk.yellow("💡 Suggestion:\n") +
               chalk.gray(
-                "  Available commands: 'scan', 'check-updates'\n" +
+                "  Available commands: 'scan', 'check-update'\n" +
                   "  - Run 'unreach scan' to scan the codebase\n" +
-                  "  - Run 'unreach check-updates' to check for updates\n" +
+                  "  - Run 'unreach check-update' to check for updates\n" +
                   "  - Run 'unreach --help' to see all commands\n\n",
               ),
           );
@@ -117,8 +117,7 @@ export function createCommand(): Command {
     },
   });
   program
-    .command("check-updates")
-    .alias("update")
+    .command("check-update")
     .description("Check for available updates")
     .action(async () => {
       const { checkForUpdates, displayUpdateNotification } =
@@ -147,8 +146,8 @@ export function createCommand(): Command {
     .description("Scan the codebase for unused code")
     .argument("[directory]", "Directory to scan", ".")
     .option(
-      "-e, --entry <entry...>",
-      "Custom entry point(s) (e.g., src/index.ts)",
+      "-e, --entry <entry>",
+      "Custom entry point(s). Multiple entry points can be specified comma-separated (e.g., src/index.ts,src/cli.ts)",
     )
     .option("--fix", "Automatically remove unused code (coming soon)")
     .option(
@@ -230,9 +229,25 @@ export function parseArgs(): ScanOptions & { command?: string } {
   }
   const groupBy = options.groupBy === "file" ? "file" : "type";
   const noConfigPassed = process.argv.includes("--no-config");
+
+  // Parse comma-separated entry points
+  let entry: string | string[] | undefined = options.entry;
+  if (entry && typeof entry === "string") {
+    const entries = entry
+      .split(",")
+      .map((ep) => ep.trim())
+      .filter(Boolean);
+    entry =
+      entries.length === 1
+        ? entries[0]
+        : entries.length > 1
+          ? entries
+          : undefined;
+  }
+
   return {
     command,
-    entry: options.entry,
+    entry,
     fix: options.fix || false,
     export: parseOutputFormat(options.export),
     exportPath: options.exportPath,

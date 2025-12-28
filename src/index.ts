@@ -34,7 +34,7 @@ async function main() {
     return;
   }
   const command = process.argv[2];
-  if (command === "check-updates" || command === "update") {
+  if (command === "check-update") {
     const program = createCommand();
     program.exitOverride((err) => {
       if (
@@ -63,9 +63,9 @@ async function main() {
         chalk.red.bold(`\n❌ Error: Unknown command: '${command}'\n\n`) +
           chalk.yellow("💡 Suggestion:\n") +
           chalk.gray(
-            "  Available commands: 'scan', 'check-updates'\n" +
+            "  Available commands: 'scan', 'check-update'\n" +
               "  - Run 'unreach scan' to scan the codebase\n" +
-              "  - Run 'unreach check-updates' to check for updates\n" +
+              "  - Run 'unreach check-update' to check for updates\n" +
               "  - Run 'unreach --help' to see all commands\n\n",
           ),
       );

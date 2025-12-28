@@ -23,16 +23,17 @@ This project adheres to a code of conduct that all contributors are expected to 
 ### Prerequisites
 
 - **Node.js**: Version 18.0.0 or higher
-- **npm** or **bun**: Package manager
+- **npm**: Package manager
 - **Git**: Version control
 
 ### Fork and Clone
 
 1. Fork the repository on GitHub
+
 2. Clone your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/unreach.git
-   cd unreach/package
+   git clone https://github.com/kiron0/unreach.git
+   cd unreach
    ```
 3. Add the upstream repository:
    ```bash
@@ -45,8 +46,6 @@ This project adheres to a code of conduct that all contributors are expected to 
 
 ```bash
 npm install
-# or
-bun install
 ```
 
 ### 2. Build the Project

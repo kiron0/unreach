@@ -37,7 +37,7 @@
     "type": "git",
     "url": "https://github.com/kiron0/unreach.git"
   },
-  "homepage": "https://github.com/kiron0/unreach#readme",
+  "homepage": "https://unreach.js.org",
   "dependencies": {
     "@typescript-eslint/typescript-estree": "^8.50.1",
     "chalk": "^5.6.2",
