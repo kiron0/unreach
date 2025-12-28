@@ -94,8 +94,9 @@ export function createCommand(): Command {
             ) +
               chalk.yellow("💡 Suggestion:\n") +
               chalk.gray(
-                "  Available commands: 'scan'\n" +
+                "  Available commands: 'scan', 'check-updates'\n" +
                   "  - Run 'unreach scan' to scan the codebase\n" +
+                  "  - Run 'unreach check-updates' to check for updates\n" +
                   "  - Run 'unreach --help' to see all commands\n\n",
               ),
           );
@@ -115,6 +116,32 @@ export function createCommand(): Command {
       process.stderr.write(str);
     },
   });
+  program
+    .command("check-updates")
+    .alias("update")
+    .description("Check for available updates")
+    .action(async () => {
+      const { checkForUpdates, displayUpdateNotification } =
+        await import("../utils/version-check.js");
+      const { getPackageVersion } = await import("../utils/version.js");
+      const currentVersion = getPackageVersion();
+      const cwd = process.cwd();
+      console.log(chalk.cyan(`Checking for updates...`));
+      const { hasUpdate, latestVersion } = await checkForUpdates(
+        currentVersion,
+        "unreach",
+      );
+      if (hasUpdate && latestVersion) {
+        displayUpdateNotification(currentVersion, latestVersion, cwd);
+      } else {
+        console.log(
+          chalk.green(
+            `\n✓ You're using the latest version: ${chalk.bold(currentVersion)}\n`,
+          ),
+        );
+      }
+      process.exit(0);
+    });
   program
     .command("scan")
     .description("Scan the codebase for unused code")

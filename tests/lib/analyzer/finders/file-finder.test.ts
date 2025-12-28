@@ -42,7 +42,7 @@ describe("findUnusedFiles", () => {
 
     const reachableFiles = new Set<string>([file1]);
     const unused = findUnusedFiles(graph, reachableFiles);
-    const unusedPaths = unused.map(u => u.file);
+    const unusedPaths = unused.map((u) => u.file);
     expect(unusedPaths).not.toContain(file1);
   });
 
@@ -54,7 +54,7 @@ describe("findUnusedFiles", () => {
 
     const reachableFiles = new Set<string>([entryFile]);
     const unused = findUnusedFiles(graph, reachableFiles);
-    const unusedPaths = unused.map(u => u.file);
+    const unusedPaths = unused.map((u) => u.file);
     expect(unusedPaths).not.toContain(entryFile);
   });
 

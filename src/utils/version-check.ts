@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import * as https from "https";
+import { detectPackageManager } from "./package-manager.js";
 
 interface PackageInfo {
   version: string;
@@ -89,13 +90,17 @@ function compareVersions(v1: string, v2: string): number {
 export function displayUpdateNotification(
   currentVersion: string,
   latestVersion: string,
+  cwd?: string,
 ): void {
+  const pm = detectPackageManager(cwd);
   console.log(
     chalk.yellow(
       `\n⚠️  Update available: ${chalk.bold(currentVersion)} → ${chalk.bold(latestVersion)}`,
     ),
   );
   console.log(
-    chalk.gray(`   Run ${chalk.cyan("npm install -g unreach")} to update\n`),
+    chalk.gray(
+      `   Run ${chalk.cyan(`${pm.globalInstallCommand} unreach`)} to update\n`,
+    ),
   );
 }

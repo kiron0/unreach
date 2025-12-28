@@ -10,6 +10,8 @@ import {
 } from "./cli/interactive.js";
 import { showHomePage } from "./cli/ui.js";
 
+export type { ConfigValidationError, UnreachConfig } from "./lib/config.js";
+
 async function main() {
   if (process.argv.length === 2 && process.stdin.isTTY) {
     showHomePage();
@@ -31,6 +33,22 @@ async function main() {
     process.exit(0);
     return;
   }
+  const command = process.argv[2];
+  if (command === "check-updates" || command === "update") {
+    const program = createCommand();
+    program.exitOverride((err) => {
+      if (
+        err.code === "commander.help" ||
+        err.code === "commander.helpDisplayed"
+      ) {
+        process.exit(0);
+      }
+      throw err;
+    });
+    program.parse();
+    return;
+  }
+
   const program = createCommand();
   program.exitOverride((err) => {
     if (
@@ -45,8 +63,9 @@ async function main() {
         chalk.red.bold(`\n❌ Error: Unknown command: '${command}'\n\n`) +
           chalk.yellow("💡 Suggestion:\n") +
           chalk.gray(
-            "  Available commands: 'scan'\n" +
+            "  Available commands: 'scan', 'check-updates'\n" +
               "  - Run 'unreach scan' to scan the codebase\n" +
+              "  - Run 'unreach check-updates' to check for updates\n" +
               "  - Run 'unreach --help' to see all commands\n\n",
           ),
       );

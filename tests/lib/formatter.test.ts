@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ResultFormatter } from "../../src/lib/formatter.js";
 import type { ScanResult } from "../../src/types/index.js";
 import { OutputFormat } from "../../src/utils/export.js";

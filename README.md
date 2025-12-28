@@ -4,19 +4,43 @@
 
 ## Features
 
+### Detection Capabilities
 - **Unused packages detection** - Find npm packages that are installed but never imported
 - **Unused imports detection** - Identify imports that are never used in your code
 - **Unused exports detection** - Find exported symbols that are never imported elsewhere
 - **Unused functions detection** - Discover functions that are defined but never called
 - **Unused variables detection** - Identify variables that are declared but never referenced
+- **Unused types detection** - Find TypeScript types, interfaces, and enums that are never used
 - **Unused files detection** - Find files that are never imported or referenced
 - **Unused configs detection** - Detect unused configuration keys in `package.json` and `tsconfig.json`
 - **Unused scripts detection** - Find npm scripts that are never executed
+- **Unused CSS classes detection** - Identify CSS classes defined but never used in JSX/TSX
+- **Unused assets detection** - Find image and font files that are never imported
+
+### Advanced Features
 - **Real dependency tracking** - Follows actual import/export chains, not just file existence
 - **TypeScript support** - Full support for TypeScript, including type-only imports/exports
+- **Dynamic import support** - Tracks dynamic imports (`import()`) and conditional imports
+- **JSX/TSX support** - Analyzes React components and JSX element usage
+- **Entry point detection** - Automatically detects entry points from `package.json` and `tsconfig.json`
+- **Test file detection** - Automatically excludes test files from analysis
+- **Error recovery** - Continues analysis even when individual files have parse errors
+- **Incremental analysis** - Caches results for faster subsequent scans
+- **File size limits** - Skips parsing files that exceed size limits (default: 10MB)
+- **Watch mode** - Continuously monitors files and re-scans on changes
+- **Watch rate limiting** - Prevents excessive scans in watch mode (default: 1 scan/second)
+- **Package manager detection** - Automatically detects npm/yarn/pnpm/bun and shows correct install commands
+
+### User Experience
 - **Progress indicator** - Visual progress bar when analyzing large codebases
-- **JSON output** - Export results in JSON format for automation
-- **Entry point detection** - Automatically detects entry points or use custom ones
+- **Interactive mode** - Menu-driven interface for configuring scans
+- **Multiple export formats** - JSON, CSV, TSV, Markdown, HTML
+- **Grouped output** - Group results by type or by file
+- **Verbose mode** - Detailed file-by-file processing information
+- **Debug mode** - Stack traces and detailed error information
+- **Benchmark mode** - Performance metrics (parse time, analysis time, memory usage)
+- **Dependency visualization** - Interactive HTML dependency graph
+- **Configuration files** - Support for `unreach.config.js` and `unreach.config.ts`
 
 ## Quick Start
 
@@ -38,6 +62,34 @@ npm install -g unreach
 
 ```bash
 bun install -g unreach
+```
+
+#### Install with yarn
+
+```bash
+yarn global add unreach
+```
+
+#### Install with pnpm
+
+```bash
+pnpm add -g unreach
+```
+
+#### Check for updates
+
+```bash
+unreach check-updates
+# or
+unreach update
+```
+
+#### Check version
+
+```bash
+unreach --version
+# or
+unreach -v
 ```
 
 ### Your First Scan
@@ -209,8 +261,14 @@ unreach scan /path/to/typescript-project
 # Scan with custom entry point
 unreach scan --entry src/main.ts
 
+# Scan with multiple entry points
+unreach scan --entry src/index.ts --entry src/cli.ts
+
 # Export as JSON for automation (saved to reports/ by default)
 unreach scan --export json
+
+# Export in multiple formats
+unreach scan --export json,html,md
 
 # Export with history (keeps previous reports)
 unreach scan --export json --history
@@ -224,8 +282,35 @@ unreach scan --quiet
 # Scan without progress bar
 unreach scan --no-progress
 
-# Scan with multiple entry points
-unreach scan --entry src/index.ts --entry src/cli.ts
+# Watch mode (continuous monitoring)
+unreach scan --watch
+
+# Interactive mode (menu-driven configuration)
+unreach scan --interactive
+
+# Verbose mode (detailed output)
+unreach scan --verbose
+
+# Debug mode (stack traces and detailed errors)
+unreach scan --debug
+
+# Benchmark mode (performance metrics)
+unreach scan --benchmark
+
+# Generate dependency graph visualization
+unreach scan --visualize
+
+# Group output by file instead of type
+unreach scan --group-by file
+
+# Disable incremental analysis (full re-scan)
+unreach scan --no-incremental
+
+# Ignore configuration file
+unreach scan --no-config
+
+# Check for updates
+unreach check-updates
 ```
 
 ## How It Works
@@ -331,18 +416,249 @@ unreach scan --export json
 }
 ```
 
+## Commands
+
+### `scan` - Scan codebase for unused code
+
+```bash
+unreach scan [directory] [options]
+```
+
+### `check-updates` / `update` - Check for available updates
+
+```bash
+unreach check-updates
+# or
+unreach update
+```
+
+Automatically detects your package manager and shows the correct install command.
+
+### `--version` / `-v` - Show version number
+
+```bash
+unreach --version
+# or
+unreach -v
+```
+
 ## Options
 
-| Option                | Description                                                                                                                                                                                                       |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--entry <entry...>`  | Custom entry point(s) (e.g., `src/index.ts`)                                                                                                                                                                      |
-| `--export [format]`   | Export report in specified format(s). Multiple formats can be comma-separated (e.g., `json,html,md`). Supported formats: `json`, `csv`, `tsv`, `md`, `html`. Reports are saved to `reports/` directory by default |
-| `--export-path <dir>` | Specify output directory for exported reports. Defaults to `reports/` if not specified. Files will be named `unreach-report.{ext}`. Directories will be created automatically if they don't exist                 |
-| `--history`           | Keep previous reports by appending timestamps (e.g., `unreach-report-2024-01-15T14-30-45.json`). By default, reports are replaced                                                                                 |
-| `--quiet`             | Suppress all output except errors                                                                                                                                                                                 |
-| `--no-progress`       | Disable progress indicator (enabled by default)                                                                                                                                                                   |
-| `--cwd <cwd>`         | Working directory (overrides directory argument)                                                                                                                                                                  |
-| `--fix`               | Automatically remove unused code (coming soon)                                                                                                                                                                    |
+### Scan Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--entry <entry...>` | `-e` | Custom entry point(s) (e.g., `src/index.ts`). Can be specified multiple times. |
+| `--export [format]` | | Export report in specified format(s). Multiple formats can be comma-separated (e.g., `json,html,md`). Supported formats: `json`, `csv`, `tsv`, `md`, `html`. Reports are saved to `reports/` directory by default |
+| `--export-path <dir>` | | Specify output directory for exported reports. Defaults to `reports/` if not specified. Files will be named `unreach-report.{ext}`. Directories will be created automatically if they don't exist |
+| `--history` | | Keep previous reports by appending timestamps (e.g., `unreach-report-2024-01-15T14-30-45.json`). By default, reports are replaced |
+| `--quiet` | | Suppress all output except errors |
+| `--no-progress` | | Disable progress indicator (enabled by default) |
+| `--cwd <cwd>` | | Working directory (overrides directory argument) |
+| `--no-incremental` | | Disable incremental analysis (re-analyze all files, ignoring cache) |
+| `--visualize` | | Generate an interactive dependency graph visualization (`dependency-graph.html`) |
+| `--benchmark` | | Track and display performance metrics (parse time, analysis time, memory usage) |
+| `--verbose` | | Show detailed output including file-by-file processing information |
+| `--debug` | | Enable debug mode with stack traces and detailed error information |
+| `--group-by <type>` | | Group output by `type` or `file` (default: `type`) |
+| `--interactive` | | Show interactive menu to configure scan options |
+| `--watch` | | Watch for file changes and automatically re-scan (continuous monitoring) |
+| `--no-config` | | Ignore configuration file and use default settings |
+| `--fix` | | Automatically remove unused code (coming soon) |
+
+### Global Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--version` | `-v` | Show version number |
+| `--help` | `-h` | Display help for command |
+
+## Configuration Files
+
+Unreach supports configuration files to customize analysis behavior without command-line flags.
+
+### Supported Configuration Files
+
+- `unreach.config.js` - JavaScript configuration file
+- `unreach.config.ts` - TypeScript configuration file (requires `ts-node`)
+
+### Configuration Example
+
+Create `unreach.config.js` in your project root:
+
+```javascript
+module.exports = {
+  ignore: {
+    files: ["**/*.test.ts", "**/fixtures/**"],
+    packages: ["@types/*"],
+    exports: ["**/index.ts"],
+    functions: ["main"],
+    variables: [],
+    imports: [],
+    types: [],
+    cssClasses: [],
+    assets: []
+  },
+  entryPoints: ["src/index.ts"],
+  excludePatterns: ["**/node_modules/**", "**/dist/**"],
+  rules: {
+    unusedPackages: true,
+    unusedImports: true,
+    unusedExports: true,
+    unusedFunctions: true,
+    unusedVariables: true,
+    unusedFiles: true,
+    unusedConfigs: true,
+    unusedScripts: true,
+    unusedTypes: true,
+    unusedCSSClasses: true,
+    unusedAssets: true
+  },
+  testFileDetection: {
+    enabled: true,
+    patterns: ["**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"]
+  },
+  maxFileSize: 10 * 1024 * 1024, // 10MB
+  watchRateLimit: 1 // scans per second
+};
+```
+
+### TypeScript Configuration Example
+
+Create `unreach.config.ts`:
+
+```typescript
+import type { UnreachConfig } from "unreach";
+
+const config: UnreachConfig = {
+  ignore: {
+    files: ["**/*.test.ts"],
+    packages: ["@types/*"]
+  },
+  entryPoints: ["src/index.ts"],
+  rules: {
+    unusedPackages: true,
+    unusedImports: true
+  }
+};
+
+export default config;
+```
+
+### Disable Configuration
+
+Use `--no-config` to ignore configuration files:
+
+```bash
+unreach scan --no-config
+```
+
+## Advanced Features
+
+### Watch Mode
+
+Continuously monitor files and automatically re-scan on changes:
+
+```bash
+unreach scan --watch
+```
+
+Watch mode includes:
+- Automatic re-scanning on file changes
+- Rate limiting to prevent excessive scans (configurable via `watchRateLimit`)
+- Debounced file change detection
+- Support for all scan options
+
+### Interactive Mode
+
+Menu-driven interface for configuring scans:
+
+```bash
+unreach scan --interactive
+```
+
+The interactive menu guides you through:
+- Directory selection
+- Entry point configuration
+- Export format selection
+- Output grouping preferences
+- Visualization options
+- Benchmark settings
+
+### Dependency Visualization
+
+Generate an interactive HTML dependency graph:
+
+```bash
+unreach scan --visualize
+```
+
+Creates `dependency-graph.html` with an interactive visualization of your codebase's dependency structure.
+
+### Benchmark Mode
+
+Track and display performance metrics:
+
+```bash
+unreach scan --benchmark
+```
+
+Shows:
+- Parse time
+- Analysis time
+- Memory usage
+- Total execution time
+
+### Grouped Output
+
+Group results by type (default) or by file:
+
+```bash
+# Group by type (default)
+unreach scan --group-by type
+
+# Group by file
+unreach scan --group-by file
+```
+
+### Incremental Analysis
+
+Unreach caches analysis results for faster subsequent scans. To disable:
+
+```bash
+unreach scan --no-incremental
+```
+
+### File Size Limits
+
+Large files are automatically skipped to prevent performance issues. Default limit is 10MB. Configure in `unreach.config.js`:
+
+```javascript
+module.exports = {
+  maxFileSize: 10 * 1024 * 1024 // 10MB
+};
+```
+
+### Test File Detection
+
+Test files are automatically excluded from analysis. Configure patterns in `unreach.config.js`:
+
+```javascript
+module.exports = {
+  testFileDetection: {
+    enabled: true,
+    patterns: ["**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"]
+  }
+};
+```
+
+## Package Manager Detection
+
+Unreach automatically detects your package manager (npm, yarn, pnpm, bun) and shows the correct install command in update notifications. Detection is based on:
+
+1. Lock files (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `bun.lock`)
+2. Environment variables
+3. Defaults to npm if none detected
 
 ## License
 

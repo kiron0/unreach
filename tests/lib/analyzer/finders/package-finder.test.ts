@@ -120,8 +120,8 @@ describe("findUnusedPackages", () => {
   it("should handle all packages used", () => {
     const packageJson = {
       dependencies: {
-        "package1": "1.0.0",
-        "package2": "2.0.0",
+        package1: "1.0.0",
+        package2: "2.0.0",
       },
     };
     fs.writeFileSync(

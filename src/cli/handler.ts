@@ -351,7 +351,7 @@ export async function runWithExit(
     checkForUpdates(currentVersion, "unreach")
       .then(({ hasUpdate, latestVersion }) => {
         if (hasUpdate && latestVersion) {
-          displayUpdateNotification(currentVersion, latestVersion);
+          displayUpdateNotification(currentVersion, latestVersion, options.cwd);
         }
       })
       .catch(() => {});

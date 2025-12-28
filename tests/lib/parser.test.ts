@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -30,9 +31,10 @@ describe("ASTParser", () => {
       const result = parser.parseFile(testFile);
       expect(result).not.toBeNull();
       expect(result?.file).toBe(testFile);
-      expect(result?.exports.size >= 0 || result?.variables.size >= 0).toBe(
-        true,
-      );
+      expect(
+        (result?.exports?.size ?? 0) >= 0 ||
+          (result?.variables?.size ?? 0) >= 0,
+      ).toBe(true);
     });
 
     it("should parse imports", () => {
@@ -51,9 +53,9 @@ describe("ASTParser", () => {
       const result = parser.parseFile(testFile);
       expect(result).not.toBeNull();
       expect(
-        result?.functions.size > 0 ||
-          result?.exports.size > 0 ||
-          result?.variables.size > 0,
+        (result?.functions?.size ?? 0) > 0 ||
+          (result?.exports?.size ?? 0) > 0 ||
+          (result?.variables?.size ?? 0) > 0,
       ).toBe(true);
     });
 
@@ -134,11 +136,11 @@ describe("ASTParser", () => {
       const result = parser.parseFile(testFile);
       expect(result).not.toBeNull();
       const hasDefault =
-        result?.exports.has("default") ||
-        Array.from(result?.exports.values() || []).some(
+        result?.exports?.has("default") ||
+        Array.from(result?.exports?.values() || []).some(
           (e) => e.type === "default",
         );
-      expect(hasDefault || result?.exports.size > 0).toBe(true);
+      expect(hasDefault || (result?.exports?.size ?? 0) > 0).toBe(true);
     });
 
     it("should handle namespace exports", () => {
@@ -147,9 +149,10 @@ describe("ASTParser", () => {
 
       const result = parser.parseFile(testFile);
       expect(result).not.toBeNull();
-      expect(result?.reExports.size >= 0 || result?.exports.size >= 0).toBe(
-        true,
-      );
+      expect(
+        (result?.reExports?.size ?? 0) >= 0 ||
+          (result?.exports?.size ?? 0) >= 0,
+      ).toBe(true);
     });
 
     it("should handle type-only imports", () => {
