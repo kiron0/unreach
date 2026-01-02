@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import chalk from "chalk";
 import * as process from "process";
 import { createCommand, parseArgs } from "./cli/args.js";

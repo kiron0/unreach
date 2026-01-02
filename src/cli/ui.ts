@@ -73,11 +73,6 @@ export function showHomePage(): void {
       chalk.white("Output directory for exported reports"),
   );
   console.log(
-    chalk.gray("  --cwd <cwd>") +
-      " ".repeat(18) +
-      chalk.white("Working directory"),
-  );
-  console.log(
     chalk.gray("  --quiet") +
       " ".repeat(21) +
       chalk.white("Suppress all output except errors"),

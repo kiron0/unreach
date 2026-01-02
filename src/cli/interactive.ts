@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import inquirer from "inquirer";
-import * as path from "path";
 import type { ScanOptions } from "../types/index.js";
+import { resolveDirectoryPath } from "../utils/path-utils.js";
 
 export interface InteractiveOptions {
   directory?: string;
@@ -100,7 +100,7 @@ export function convertToScanOptions(
   interactive: InteractiveOptions,
 ): ScanOptions {
   return {
-    cwd: path.resolve(interactive.directory || process.cwd()),
+    cwd: resolveDirectoryPath(interactive.directory || process.cwd()),
     entry: interactive.entryPoints,
     export: interactive.exportFormat as any,
     groupBy: interactive.groupBy,

@@ -1,6 +1,6 @@
 {
   "name": "unreach",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A CLI that deeply analyzes a codebase to find what exists but is truly unused — packages, imports, exports, functions, files, and even configs — with real dependency awareness",
   "type": "module",
   "main": "dist/index.js",
@@ -11,12 +11,8 @@
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsup",
-    "build:watch": "tsup --watch",
     "format": "prettier --write \"**/*.{js,json,ts,md}\"",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest run"
   },
   "keywords": [
     "cli",
@@ -48,7 +44,6 @@
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.9",
-    "@vitest/ui": "^4.0.16",
     "prettier": "^3.7.4",
     "terser": "^5.44.1",
     "tsup": "^8.5.1",

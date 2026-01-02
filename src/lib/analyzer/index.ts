@@ -104,7 +104,6 @@ export class ReachabilityAnalyzer {
                   reachableExports.add(specifier);
                   state.reachableExports.set(resolved, reachableExports);
                 }
-                // Check if it's a re-export and follow the chain
                 const reExportsMap =
                   importedNode.reExports instanceof Map
                     ? importedNode.reExports

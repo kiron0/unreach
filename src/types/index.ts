@@ -89,6 +89,7 @@ export interface ScanOptions {
   interactive?: boolean;
   watch?: boolean;
   noConfig?: boolean;
+  stats?: boolean;
 }
 export interface ImportInfo {
   path: string;

@@ -10,6 +10,9 @@ export default defineConfig({
   treeshake: true,
   splitting: false,
   bundle: true,
+  banner: {
+    js: "#!/usr/bin/env node",
+  },
   esbuildOptions(options) {
     options.drop = ["debugger"];
   },

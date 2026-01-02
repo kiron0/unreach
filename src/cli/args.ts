@@ -1,8 +1,8 @@
 import chalk from "chalk";
 import { Command } from "commander";
-import * as path from "path";
 import type { ScanOptions } from "../types/index.js";
 import { parseOutputFormat } from "../utils/export.js";
+import { resolveDirectoryPath } from "../utils/path-utils.js";
 import { getPackageVersion } from "../utils/version.js";
 
 export function createCommand(): Command {
@@ -44,7 +44,6 @@ export function createCommand(): Command {
             "fix",
             "export",
             "export-path",
-            "cwd",
             "quiet",
             "no-progress",
             "history",
@@ -56,6 +55,7 @@ export function createCommand(): Command {
             "group-by",
             "interactive",
             "watch",
+            "stats",
           ];
 
           if (scanOptions.includes(unknownOption)) {
@@ -144,7 +144,11 @@ export function createCommand(): Command {
   program
     .command("scan")
     .description("Scan the codebase for unused code")
-    .argument("[directory]", "Directory to scan", ".")
+    .argument(
+      "[directory]",
+      "Directory to scan (default: current directory)",
+      ".",
+    )
     .option(
       "-e, --entry <entry>",
       "Custom entry point(s). Multiple entry points can be specified comma-separated (e.g., src/index.ts,src/cli.ts)",
@@ -158,7 +162,6 @@ export function createCommand(): Command {
       "--export-path <dir>",
       "Specify output directory for exported reports. Files will use default naming (unreach-report.{ext}). Directories will be created automatically if they don't exist",
     )
-    .option("--cwd <cwd>", "Working directory (overrides directory argument)")
     .option("--quiet", "Suppress all output except errors")
     .option("--no-progress", "Disable progress indicator (enabled by default)")
     .option(
@@ -195,9 +198,10 @@ export function createCommand(): Command {
       "--watch",
       "Watch for file changes and automatically re-scan (continuous monitoring)",
     )
+    .option("--no-config", "Ignore configuration file and use default settings")
     .option(
-      "--no-config",
-      "Ignore configuration file and use default settings",
+      "--stats",
+      "Show summary statistics (files analyzed, packages analyzed, entry points, unused items breakdown)",
     );
   return program;
 }
@@ -217,20 +221,21 @@ export function parseArgs(): ScanOptions & { command?: string } {
   const activeCommand =
     program.commands.find((cmd) => cmd.name() === command) || program;
   const options = activeCommand.opts();
+
   let directory = ".";
-  if (
-    command === "scan" &&
-    activeCommand.args &&
-    activeCommand.args.length > 0
-  ) {
-    directory = activeCommand.args[0];
+
+  if (command === "scan") {
+    const commandArgs =
+      (activeCommand as any).processedArgs || activeCommand.args || [];
+    if (commandArgs.length > 0) {
+      directory = commandArgs[0];
+    }
   } else if (command !== "scan" && program.args.length > 1) {
     directory = program.args[1];
   }
   const groupBy = options.groupBy === "file" ? "file" : "type";
   const noConfigPassed = process.argv.includes("--no-config");
 
-  // Parse comma-separated entry points
   let entry: string | string[] | undefined = options.entry;
   if (entry && typeof entry === "string") {
     const entries = entry
@@ -245,13 +250,15 @@ export function parseArgs(): ScanOptions & { command?: string } {
           : undefined;
   }
 
+  const resolvedDirectory = resolveDirectoryPath(directory);
+
   return {
     command,
     entry,
     fix: options.fix || false,
     export: parseOutputFormat(options.export),
     exportPath: options.exportPath,
-    cwd: options.cwd || path.resolve(directory),
+    cwd: resolvedDirectory,
     quiet: options.quiet || false,
     noProgress: options.noProgress !== undefined ? options.noProgress : false,
     history: options.history || false,
@@ -264,5 +271,6 @@ export function parseArgs(): ScanOptions & { command?: string } {
     interactive: options.interactive || false,
     watch: options.watch || false,
     noConfig: noConfigPassed || false,
+    stats: options.stats || false,
   };
 }

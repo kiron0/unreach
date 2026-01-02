@@ -14,6 +14,7 @@ import { DependencyGraph } from "../lib/graph.js";
 import type { ScanOptions } from "../types/index.js";
 import { BenchmarkTracker } from "../utils/benchmark.js";
 import { getFormatExtension } from "../utils/export.js";
+import { resolveDirectoryPath } from "../utils/path-utils.js";
 import {
   checkForUpdates,
   displayUpdateNotification,
@@ -24,7 +25,7 @@ import { generateDependencyGraph } from "../utils/visualization.js";
 function validateDirectory(
   dir: string,
 ): { path: string; error: null } | { path: null; error: UnreachError } {
-  const targetPath = path.resolve(dir);
+  const targetPath = resolveDirectoryPath(dir);
   if (!fs.existsSync(targetPath)) {
     return { path: null, error: UnreachError.directoryNotFound(dir) };
   }
@@ -274,7 +275,7 @@ export async function runScan(
       const output = formatter.format(result, undefined, options.groupBy);
       console.log(output);
 
-      if (!options.quiet) {
+      if (options.stats) {
         const summary = formatter.formatSummary(result, {
           totalFiles,
           totalPackages,
